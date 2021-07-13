@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "571627881934",
+    "project_id": "art-gal",
+    "storage_bucket": "art-gal.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:571627881934:android:f039d2161d2f40e1fb179f",
+        "android_client_info": {
+          "package_name": "com.fbu.pbluc.artgal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "571627881934-ueeab5ip1tr3v004nsq6qqas197ii53l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCcVQWIvmR0GgikklE4VOzImTcMVhjDpn4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "571627881934-ueeab5ip1tr3v004nsq6qqas197ii53l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
