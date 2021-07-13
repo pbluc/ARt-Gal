@@ -17,6 +17,7 @@ public class MainActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
 
     private Button btnLogout;
+    private Button btnUploadMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,6 +27,7 @@ public class MainActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
 
         btnLogout = findViewById(R.id.btnLogout);
+        btnUploadMarker = findViewById(R.id.btnUploadMarker);
 
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -34,11 +36,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-    }
+        btnUploadMarker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goUploadActivity();
+            }
+        });
 
-    private void logoutUser() {
-        FirebaseAuth.getInstance().signOut();
-        goLoginActivity();
     }
 
     @Override
@@ -51,8 +55,19 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void goUploadActivity() {
+        Intent i = new Intent(this, UploadMarkerActivity.class);
+        startActivity(i);
+    }
+
     private void goLoginActivity() {
         Intent i = new Intent(this, LoginActivity.class);
         startActivity(i);
+        finish();
+    }
+
+    private void logoutUser() {
+        FirebaseAuth.getInstance().signOut();
+        goLoginActivity();
     }
 }

@@ -25,11 +25,14 @@
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@id/tvHelloWorld"
             android:text="Log Out"
             android:layout_marginTop="10dp"/>
 
+        <Button
+            android:id="@+id/btnUploadMarker"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Upload Marker"/>
     </LinearLayout>
-
 
 </RelativeLayout>

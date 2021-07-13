@@ -9,7 +9,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.ARtGal">
-        <activity android:name=".UploadMarker"></activity>
+        <activity android:name=".UploadMarkerActivity"></activity>
         <activity android:name=".CreateAccountActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
