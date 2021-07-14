@@ -38,7 +38,7 @@ public class AddMarkerActivity extends AppCompatActivity {
 
     private static final int REFERENCE_IMG_REQUEST_CODE = 1; // onActivityResult request
     private static final int AUGMENTED_OBJ_REQUEST_CODE = 2;
-    private static int UPLOAD_STORAGE_STATUS = 0;
+    private int UPLOAD_STORAGE_STATUS = 0;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
@@ -62,7 +62,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_upload_marker);
+        setContentView(R.layout.activity_add_marker);
 
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();

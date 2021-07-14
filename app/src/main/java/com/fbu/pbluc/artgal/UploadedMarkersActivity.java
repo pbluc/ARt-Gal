@@ -48,7 +48,7 @@ public class UploadedMarkersActivity extends AppCompatActivity {
         // Initialize markers
         markers = new ArrayList<>();
         // Create adapter
-        adapter = new MarkersAdapter(markers, this);
+        adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this);
         // Attach the adapter to the recyclerview to populate items
         rvMarkers.setAdapter(adapter);
         // Set layout manager o position the items
