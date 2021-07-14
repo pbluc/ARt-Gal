@@ -12,6 +12,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.FileUtils;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -37,6 +38,7 @@ import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +54,9 @@ public class UploadMarkerActivity extends AppCompatActivity {
     private FirebaseUser currentUser;
     private FirebaseStorage firebaseStorage;
     private FirebaseFirestore firebaseFirestore;
+    private StorageReference storageReference;
+    private StorageReference referenceImagesReference;
+    private StorageReference augmentedObjReference;
 
     private EditText etTitle;
     private EditText etDescription;
@@ -64,6 +69,9 @@ public class UploadMarkerActivity extends AppCompatActivity {
     private Uri referenceImgUri;
     private Uri augmentedObjUri;
 
+    private String markerImgFileName;
+    private String augmentedObjFileName;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -73,6 +81,9 @@ public class UploadMarkerActivity extends AppCompatActivity {
         currentUser = firebaseAuth.getCurrentUser();
         firebaseStorage = FirebaseStorage.getInstance();
         firebaseFirestore = FirebaseFirestore.getInstance();
+
+        // Create storage references from our app
+        storageReference = firebaseStorage.getReference();
 
         etTitle = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
@@ -109,11 +120,11 @@ public class UploadMarkerActivity extends AppCompatActivity {
         String title = etTitle.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(currentUser.getUid());
-        String markerImg = currentUser.getUid() + getFileName(referenceImgUri);
-        String augmentedObj = currentUser.getUid() + getFileName(augmentedObjUri);
+        markerImgFileName = currentUser.getUid() + getFileName(referenceImgUri);
+        augmentedObjFileName = currentUser.getUid() + getFileName(augmentedObjUri);
 
-        if(!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && markerImg != null && augmentedObj != null) {
-            Marker marker = new Marker(title, description, currentUserDoc, markerImg, augmentedObj, FieldValue.serverTimestamp(), FieldValue.serverTimestamp());
+        if(!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && markerImgFileName != null && augmentedObjFileName != null) {
+            Marker marker = new Marker(title, description, currentUserDoc, markerImgFileName, augmentedObjFileName, FieldValue.serverTimestamp(), FieldValue.serverTimestamp());
 
             currentUserDoc.
                     collection("uploadedMarkers")
@@ -124,6 +135,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
                             Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
 
                             // TODO: Upload files to Firebase Storage
+                            uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId());
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -138,6 +150,43 @@ public class UploadMarkerActivity extends AppCompatActivity {
             return;
         }
 
+    }
+
+    private void uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String id) {
+        // Create child references
+        referenceImagesReference = storageReference.child("referenceImages/" + currentUser.getUid() + "_" + id + getFileName(referenceImgUri));
+        augmentedObjReference = storageReference.child("augmentedObjects/" + currentUser.getUid() + "_" + id + getFileName(augmentedObjUri));
+
+        UploadTask uploadReferenceImgTask = (UploadTask) referenceImagesReference.putFile(referenceUri)
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // Handle unsuccessful uploads
+                        Log.e(TAG, "Unable to upload reference image to storage", e);
+                    }
+                })
+                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                    @Override
+                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                        UploadTask uploadAugmentedObjTask = (UploadTask) augmentedObjReference.putFile(augmentedUri)
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.e(TAG, "Unable to upload augmented object to storage", e);
+                                    }
+                                })
+                                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                        Toast.makeText(UploadMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+                                    }
+                                });
+                    }
+                });
+        etTitle.setText("");
+        etDescription.setText("");
+        ivReferenceImage.setImageResource(0);
+        tvSelectedAugmentedObject.setText("Only .fbx, .obj, .gltf, .glb assets");
     }
 
     @Override
