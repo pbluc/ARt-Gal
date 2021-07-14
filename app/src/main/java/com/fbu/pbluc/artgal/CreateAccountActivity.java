@@ -77,7 +77,7 @@ public class CreateAccountActivity extends AppCompatActivity {
                         .addOnCompleteListener(CreateAccountActivity.this, new OnCompleteListener<AuthResult>() {
                             @Override
                             public void onComplete(@NonNull Task<AuthResult> task) {
-                                if(task.isSuccessful()) {
+                                if (task.isSuccessful()) {
                                     // Sign up success, update UI with the signed in user's information
                                     Log.i(TAG, "createdUserWithEmail:success");
                                     Toast.makeText(CreateAccountActivity.this, "Successfully created account!", Toast.LENGTH_SHORT).show();
@@ -89,7 +89,13 @@ public class CreateAccountActivity extends AppCompatActivity {
                                     name.put("fName", fName);
                                     name.put("lName", lName);
 
-                                    User user = new User(email, name, username, password, FieldValue.serverTimestamp(), FieldValue.serverTimestamp());
+                                    User user = new User();
+                                    user.setEmail(email);
+                                    user.setName(name);
+                                    user.setUsername(username);
+                                    user.setPassword(password);
+                                    user.setCreatedAt(FieldValue.serverTimestamp());
+                                    user.setUpdatedAt(FieldValue.serverTimestamp());
 
                                     DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(firebaseUser.getUid());
                                     currentUserDoc.set(user);
@@ -118,7 +124,7 @@ public class CreateAccountActivity extends AppCompatActivity {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if(currentUser != null) {
+        if (currentUser != null) {
             goMainActivity();
         }
     }

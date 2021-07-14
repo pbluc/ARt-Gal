@@ -55,7 +55,7 @@
         android:scaleType="centerCrop"
         android:layout_below="@+id/tvTitle"
         android:layout_alignParentEnd="true"
-        tools:srcCompat="@tools:sample/avatars"
+        android:src="@drawable/canvas_jellyfish"
         />
 
     <TextView

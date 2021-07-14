@@ -23,7 +23,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UploadedMarkersActivity extends AppCompatActivity {
+public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
 
     private static final String TAG = "UploadedMarkersActivity";
     private RecyclerView rvMarkers;
@@ -48,7 +48,7 @@ public class UploadedMarkersActivity extends AppCompatActivity {
         // Initialize markers
         markers = new ArrayList<>();
         // Create adapter
-        adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this);
+        adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
         // Attach the adapter to the recyclerview to populate items
         rvMarkers.setAdapter(adapter);
         // Set layout manager o position the items
@@ -72,9 +72,9 @@ public class UploadedMarkersActivity extends AppCompatActivity {
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
                     public void onComplete(@NonNull Task<QuerySnapshot> task) {
-                        if(task.isSuccessful()) {
+                        if (task.isSuccessful()) {
                             List<Marker> resultMarkers = new ArrayList<>();
-                            for(QueryDocumentSnapshot document : task.getResult()) {
+                            for (QueryDocumentSnapshot document : task.getResult()) {
                                 Marker resultMarker = document.toObject(Marker.class);
                                 resultMarkers.add(resultMarker);
                             }
@@ -85,5 +85,10 @@ public class UploadedMarkersActivity extends AppCompatActivity {
                         }
                     }
                 });
+    }
+
+    @Override
+    public void onListItemClick(int position) {
+        // Start intent to go to marker details activity
     }
 }

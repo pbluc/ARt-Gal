@@ -114,7 +114,7 @@ public class AddMarkerActivity extends AppCompatActivity {
         augmentedObj.put("uri", augmentedObjUri.toString());
         augmentedObj.put("fileName", currentUser.getUid() + getFileName(augmentedObjUri));
 
-        if(!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) {
+        if (!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) {
             Marker marker = new Marker();
             marker.setTitle(title);
             marker.setDescription(description);
@@ -132,7 +132,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                         public void onSuccess(DocumentReference documentReference) {
                             Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
 
-                            if(uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId()) != 0) {
+                            if (uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId()) != 0) {
                                 // Files were not added to storage and must delete created marker document
                                 currentUserDoc.collection("uploadedMarkers").document(documentReference.getId())
                                         .delete()
@@ -252,16 +252,16 @@ public class AddMarkerActivity extends AppCompatActivity {
         super.onStart();
         // Check if user is signed in (non-null) and update UI accordingly.
         FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if(currentUser == null) {
+        if (currentUser == null) {
             goLoginActivity();
         }
     }
 
     private void openFileChooser(View v) {
         Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
-        switch(v.getId()) {
+        switch (v.getId()) {
             case R.id.btnFindReferenceImg:
-                String[] referenceImgMimeTypes = {"image/jpeg","image/png"};
+                String[] referenceImgMimeTypes = {"image/jpeg", "image/png"};
                 intent.setType("image/*");
                 intent.putExtra(Intent.EXTRA_MIME_TYPES, referenceImgMimeTypes);
                 startActivityForResult(intent, REFERENCE_IMG_REQUEST_CODE);
@@ -278,11 +278,11 @@ public class AddMarkerActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        switch(requestCode) {
+        switch (requestCode) {
             case REFERENCE_IMG_REQUEST_CODE:
                 // If the file selection was successful
-                if(resultCode == RESULT_OK) {
-                    if(data != null) {
+                if (resultCode == RESULT_OK) {
+                    if (data != null) {
                         // Get the URI of the selected file
                         referenceImgUri = data.getData();
                         Log.i(TAG, "Uri: " + referenceImgUri.toString());
@@ -294,7 +294,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                             // Set selected image to imageView
                             Glide.with(this).load(referenceImgUri).into(ivReferenceImage);
 
-                        } catch(Exception e) {
+                        } catch (Exception e) {
                             Log.e(TAG, "File select error", e);
                         }
                     } else {
@@ -303,8 +303,8 @@ public class AddMarkerActivity extends AppCompatActivity {
                 }
                 break;
             case AUGMENTED_OBJ_REQUEST_CODE:
-                if(resultCode == RESULT_OK) {
-                    if(data != null) {
+                if (resultCode == RESULT_OK) {
+                    if (data != null) {
                         // Get the URI of the selected file
                         augmentedObjUri = data.getData();
                         Log.i(TAG, "Uri: " + augmentedObjUri.toString());
@@ -312,7 +312,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                             // Set selected augmented object file name to TextView
                             tvSelectedAugmentedObject.setText("Selected: " + getFileName(augmentedObjUri));
 
-                        } catch(Exception e) {
+                        } catch (Exception e) {
                             Log.e(TAG, "File select error", e);
                         }
                     } else {
@@ -327,10 +327,10 @@ public class AddMarkerActivity extends AppCompatActivity {
 
     private String getFileName(Uri uri) {
         String result = null;
-        if(uri != null && uri.getScheme().equals("content")) {
+        if (uri != null && uri.getScheme().equals("content")) {
             Cursor cursor = getContentResolver().query(uri, null, null, null, null);
             try {
-                if(cursor != null && cursor.moveToFirst()) {
+                if (cursor != null && cursor.moveToFirst()) {
                     result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
                 }
             } finally {
@@ -338,10 +338,10 @@ public class AddMarkerActivity extends AppCompatActivity {
             }
         }
 
-        if(uri != null && result == null) {
+        if (uri != null && result == null) {
             result = uri.getPath();
-            int cut =  result.lastIndexOf('/');
-            if(cut != -1) {
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
                 result = result.substring(cut + 1);
             }
         }

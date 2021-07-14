@@ -14,15 +14,6 @@ public class User {
     public User() {
     }
 
-    public User(String email, Map<String, Object> name, String username, String password, Object createdAt, Object updatedAt) {
-        this.email = email;
-        this.name = name;
-        this.username = username;
-        this.password = password;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
-    }
-
     public String getEmail() {
         return email;
     }

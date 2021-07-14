@@ -27,9 +27,12 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     private List<Marker> mMarkers;
     private Context mContext;
 
-    public MarkersAdapter(List<Marker> mMarkers, Context mContext) {
+    final private ListItemClickListener mOnClickListener;
+
+    public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener) {
         this.mMarkers = mMarkers;
         this.mContext = mContext;
+        this.mOnClickListener = onClickListener;
     }
 
     @NonNull
@@ -50,7 +53,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
         return mMarkers.size();
     }
 
-    public class ViewHolder extends RecyclerView.ViewHolder {
+    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
         private FirebaseStorage firebaseStorage;
 
         private TextView tvTitle;
@@ -67,6 +70,8 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
             tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
             tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
             ivReferenceImage = itemView.findViewById(R.id.ivReferenceImg);
+
+            itemView.setOnClickListener(this);
 
             firebaseStorage = FirebaseStorage.getInstance();
         }
@@ -95,5 +100,19 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
                         }
                     });
         }
+
+        @Override
+        public void onClick(View view) {
+            int position = getAdapterPosition();
+            switch (view.getId()) {
+                default:
+                    mOnClickListener.onListItemClick(position);
+                    break;
+            }
+        }
+    }
+
+    public interface ListItemClickListener {
+        void onListItemClick(int position);
     }
 }
