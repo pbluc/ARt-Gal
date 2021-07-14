@@ -1,0 +1,73 @@
+package com.fbu.pbluc.artgal.adapters;
+
+import android.content.Context;
+import android.net.Uri;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.fbu.pbluc.artgal.R;
+import com.fbu.pbluc.artgal.models.Marker;
+
+import java.util.List;
+
+public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHolder> {
+
+    private List<Marker> mMarkers;
+    private Context mContext;
+
+    public MarkersAdapter(List<Marker> mMarkers, Context mContext) {
+        this.mMarkers = mMarkers;
+        this.mContext = mContext;
+    }
+
+    @NonNull
+    @Override
+    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(mContext).inflate(R.layout.item_marker, parent, false);
+        return new ViewHolder(view);
+    }
+
+    @Override
+    public void onBindViewHolder(@NonNull MarkersAdapter.ViewHolder holder, int position) {
+        Marker marker = mMarkers.get(position);
+        holder.bind(marker);
+    }
+
+    @Override
+    public int getItemCount() {
+        return mMarkers.size();
+    }
+
+    public class ViewHolder extends RecyclerView.ViewHolder {
+        private TextView tvTitle;
+        private TextView tvDescription;
+        private TextView tvAugmentedObjectFileName;
+        private TextView tvCreatedAt;
+        private ImageView ivReferenceImage;
+
+        public ViewHolder(@NonNull View itemView) {
+            super(itemView);
+
+            tvTitle = itemView.findViewById(R.id.tvTitle);
+            tvDescription = itemView.findViewById(R.id.tvDescription);
+            tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
+            tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
+            ivReferenceImage = itemView.findViewById(R.id.ivReferenceImage);
+        }
+
+        public void bind(Marker marker) {
+            tvTitle.setText(marker.getTitle());
+            tvDescription.setText(marker.getDescription());
+            tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
+            tvCreatedAt.setText(marker.getCreatedAt().toString()); // TODO: Format timestamp
+            Glide.with(mContext).load(Uri.parse((String) marker.getMarkerImg().get("uri"))).into(ivReferenceImage);
+        }
+    }
+}

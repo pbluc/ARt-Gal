@@ -6,9 +6,12 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -18,6 +21,7 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btnLogout;
     private Button btnUploadMarker;
+    private Button btnViewMarker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,6 +32,8 @@ public class MainActivity extends AppCompatActivity {
 
         btnLogout = findViewById(R.id.btnLogout);
         btnUploadMarker = findViewById(R.id.btnUploadMarker);
+        btnViewMarker = findViewById(R.id.btnViewMarkers);
+
 
         btnLogout.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -43,6 +49,13 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        btnViewMarker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goMarkersActivity();
+            }
+        });
+
     }
 
     @Override
@@ -55,8 +68,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void goMarkersActivity() {
+        Intent i = new Intent(this, UploadedMarkersActivity.class);
+        startActivity(i);
+    }
+
     private void goUploadActivity() {
-        Intent i = new Intent(this, UploadMarkerActivity.class);
+        Intent i = new Intent(this, AddMarkerActivity.class);
         startActivity(i);
     }
 

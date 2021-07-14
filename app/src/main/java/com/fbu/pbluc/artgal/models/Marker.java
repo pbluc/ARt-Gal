@@ -1,28 +1,22 @@
 package com.fbu.pbluc.artgal.models;
 
+import android.net.Uri;
+
 import com.google.firebase.firestore.DocumentReference;
+
+import java.util.Map;
 
 public class Marker {
 
     private String title;
     private String description;
     private DocumentReference user;
-    private String markerImg;
-    private String augmentedObj;
+    private Map<String, Object> markerImg;
+    private Map<String, Object> augmentedObj;
     private Object createdAt;
     private Object updatedAt;
 
     public Marker() {
-    }
-
-    public Marker(String title, String description, DocumentReference user, String markerImg, String augmentedObj, Object createdAt, Object updatedAt) {
-        this.title = title;
-        this.description = description;
-        this.user = user;
-        this.markerImg = markerImg;
-        this.augmentedObj = augmentedObj;
-        this.createdAt = createdAt;
-        this.updatedAt = updatedAt;
     }
 
     public String getTitle() {
@@ -49,19 +43,19 @@ public class Marker {
         this.user = user;
     }
 
-    public String getMarkerImg() {
+    public Map<String, Object> getMarkerImg() {
         return markerImg;
     }
 
-    public void setMarkerImg(String markerImg) {
+    public void setMarkerImg(Map<String, Object> markerImg) {
         this.markerImg = markerImg;
     }
 
-    public String getAugmentedObj() {
+    public Map<String, Object> getAugmentedObj() {
         return augmentedObj;
     }
 
-    public void setAugmentedObj(String augmentedObj) {
+    public void setAugmentedObj(Map<String, Object> augmentedObj) {
         this.augmentedObj = augmentedObj;
     }
 

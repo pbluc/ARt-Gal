@@ -1,23 +1,15 @@
 package com.fbu.pbluc.artgal;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.ActivityNotFoundException;
-import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
-import android.os.FileUtils;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
-import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -37,15 +29,12 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
-public class UploadMarkerActivity extends AppCompatActivity {
+public class AddMarkerActivity extends AppCompatActivity {
 
-    private static final String TAG = "UploadMarkerActivity";
+    private static final String TAG = "AddMarkerActivity";
 
     private static final int REFERENCE_IMG_REQUEST_CODE = 1; // onActivityResult request
     private static final int AUGMENTED_OBJ_REQUEST_CODE = 2;
@@ -69,9 +58,6 @@ public class UploadMarkerActivity extends AppCompatActivity {
 
     private Uri referenceImgUri;
     private Uri augmentedObjUri;
-
-    private String markerImgFileName;
-    private String augmentedObjFileName;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -121,11 +107,22 @@ public class UploadMarkerActivity extends AppCompatActivity {
         String title = etTitle.getText().toString().trim();
         String description = etDescription.getText().toString().trim();
         DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(currentUser.getUid());
-        markerImgFileName = currentUser.getUid() + getFileName(referenceImgUri);
-        augmentedObjFileName = currentUser.getUid() + getFileName(augmentedObjUri);
+        Map<String, Object> markerImg = new HashMap<>();
+        markerImg.put("uri", referenceImgUri.toString());
+        markerImg.put("fileName", currentUser.getUid() + getFileName(referenceImgUri));
+        Map<String, Object> augmentedObj = new HashMap<>();
+        augmentedObj.put("uri", augmentedObjUri.toString());
+        augmentedObj.put("fileName", currentUser.getUid() + getFileName(augmentedObjUri));
 
-        if(!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && markerImgFileName != null && augmentedObjFileName != null) {
-            Marker marker = new Marker(title, description, currentUserDoc, markerImgFileName, augmentedObjFileName, FieldValue.serverTimestamp(), FieldValue.serverTimestamp());
+        if(!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) {
+            Marker marker = new Marker();
+            marker.setTitle(title);
+            marker.setDescription(description);
+            marker.setUser(currentUserDoc);
+            marker.setCreatedAt(FieldValue.serverTimestamp());
+            marker.setUpdatedAt(FieldValue.serverTimestamp());
+            marker.setMarkerImg(markerImg);
+            marker.setAugmentedObj(augmentedObj);
 
             currentUserDoc.
                     collection("uploadedMarkers")
@@ -165,18 +162,22 @@ public class UploadMarkerActivity extends AppCompatActivity {
                                                 String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + documentReference.getId() + getFileName(augmentedObjUri);
                                                 currentUserDoc.collection("uploadedMarkers").document(documentReference.getId())
                                                         .update(
-                                                                "augmentedObj", updatedAugmentedObjectFileName,
-                                                                "markerImg", updatedReferenceImgFileName,
+                                                                "augmentedObj.fileName", updatedAugmentedObjectFileName,
+                                                                "markerImg.fileName", updatedReferenceImgFileName,
                                                                 "updatedAt", newUpdateDateTime
                                                         )
                                                         .addOnSuccessListener(new OnSuccessListener<Void>() {
                                                             @Override
                                                             public void onSuccess(Void unused) {
-                                                                marker.setMarkerImg(updatedReferenceImgFileName);
-                                                                marker.setAugmentedObj(updatedAugmentedObjectFileName);
+                                                                Map<String, Object> updatedMarkerImg = marker.getMarkerImg();
+                                                                updatedMarkerImg.put("fileName", updatedReferenceImgFileName);
+                                                                marker.setMarkerImg(updatedMarkerImg);
+                                                                Map<String, Object> updatedAugmentedObj = marker.getAugmentedObj();
+                                                                updatedAugmentedObj.put("fileName", updatedAugmentedObjectFileName);
+                                                                marker.setAugmentedObj(updatedAugmentedObj);
                                                                 Log.i(TAG, "Successfully updated both user and marker documents!");
 
-                                                                Toast.makeText(UploadMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+                                                                Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
                                                             }
                                                         })
                                                         .addOnFailureListener(new OnFailureListener() {
