@@ -24,15 +24,22 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.fbu.pbluc.artgal.models.Marker;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 
 public class UploadMarkerActivity extends AppCompatActivity {
 
@@ -44,8 +51,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
     private FirebaseStorage firebaseStorage;
-    private StorageReference referenceImgsReference;
-    private StorageReference augmentedObjectsReference;
+    private FirebaseFirestore firebaseFirestore;
 
     private EditText etTitle;
     private EditText etDescription;
@@ -55,6 +61,9 @@ public class UploadMarkerActivity extends AppCompatActivity {
     private ImageView ivReferenceImage;
     private TextView tvSelectedAugmentedObject;
 
+    private Uri referenceImgUri;
+    private Uri augmentedObjUri;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -63,8 +72,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
         firebaseStorage = FirebaseStorage.getInstance();
-        referenceImgsReference = firebaseStorage.getReference().child("referenceImages");
-        augmentedObjectsReference = firebaseStorage.getReference().child("augmentedObjects");
+        firebaseFirestore = FirebaseFirestore.getInstance();
 
         etTitle = findViewById(R.id.etTitle);
         etDescription = findViewById(R.id.etDescription);
@@ -91,9 +99,44 @@ public class UploadMarkerActivity extends AppCompatActivity {
         btnSubmit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
+                addMarkerDocument();
             }
         });
+
+    }
+
+    private void addMarkerDocument() {
+        String title = etTitle.getText().toString().trim();
+        String description = etDescription.getText().toString().trim();
+        DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(currentUser.getUid());
+        String markerImg = currentUser.getUid() + getFileName(referenceImgUri);
+        String augmentedObj = currentUser.getUid() + getFileName(augmentedObjUri);
+
+        if(!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && markerImg != null && augmentedObj != null) {
+            Marker marker = new Marker(title, description, currentUserDoc, markerImg, augmentedObj, FieldValue.serverTimestamp(), FieldValue.serverTimestamp());
+
+            currentUserDoc.
+                    collection("uploadedMarkers")
+                    .add(marker)
+                    .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+                        @Override
+                        public void onSuccess(DocumentReference documentReference) {
+                            Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
+
+                            // TODO: Upload files to Firebase Storage
+                        }
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                        @Override
+                        public void onFailure(@NonNull Exception e) {
+                            Log.e(TAG, "Error adding document", e);
+                            return;
+                        }
+                    });
+        } else {
+            Toast.makeText(this, "One more fields empty!", Toast.LENGTH_LONG).show();
+            return;
+        }
 
     }
 
@@ -134,15 +177,15 @@ public class UploadMarkerActivity extends AppCompatActivity {
                 if(resultCode == RESULT_OK) {
                     if(data != null) {
                         // Get the URI of the selected file
-                        final Uri uri = data.getData();
-                        Log.i(TAG, "Uri: " + uri.toString());
+                        referenceImgUri = data.getData();
+                        Log.i(TAG, "Uri: " + referenceImgUri.toString());
                         try {
                             // Get the file path from the URI
-                            final String path = uri.getPath();
+                            final String path = referenceImgUri.getPath();
                             Toast.makeText(this, "File selected: " + path, Toast.LENGTH_SHORT).show();
 
                             // Set selected image to imageView
-                            Glide.with(this).load(uri).into(ivReferenceImage);
+                            Glide.with(this).load(referenceImgUri).into(ivReferenceImage);
 
                         } catch(Exception e) {
                             Log.e(TAG, "File select error", e);
@@ -156,11 +199,11 @@ public class UploadMarkerActivity extends AppCompatActivity {
                 if(resultCode == RESULT_OK) {
                     if(data != null) {
                         // Get the URI of the selected file
-                        final Uri uri = data.getData();
-                        Log.i(TAG, "Uri: " + uri.toString());
+                        augmentedObjUri = data.getData();
+                        Log.i(TAG, "Uri: " + augmentedObjUri.toString());
                         try {
                             // Set selected augmented object file name to TextView
-                            tvSelectedAugmentedObject.setText("Selected: " + getFileName(uri));
+                            tvSelectedAugmentedObject.setText("Selected: " + getFileName(augmentedObjUri));
 
                         } catch(Exception e) {
                             Log.e(TAG, "File select error", e);
@@ -177,7 +220,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
 
     private String getFileName(Uri uri) {
         String result = null;
-        if(uri.getScheme().equals("content")) {
+        if(uri != null && uri.getScheme().equals("content")) {
             Cursor cursor = getContentResolver().query(uri, null, null, null, null);
             try {
                 if(cursor != null && cursor.moveToFirst()) {
@@ -188,7 +231,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
             }
         }
 
-        if(result == null) {
+        if(uri != null && result == null) {
             result = uri.getPath();
             int cut =  result.lastIndexOf('/');
             if(cut != -1) {
