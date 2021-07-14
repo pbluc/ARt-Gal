@@ -146,11 +146,6 @@ ARt Gal is an Android and multisharing AR app that allows users to detect and au
 | createdAt|Date and time|Date when marker document is createdDate when marker document is created|
 | updatedAt|Date and time|Date when marker document is last updated|
 
-#### Firestore Hierarchy Layout
-![](https://i.imgur.com/3EKTZCP.png)
-
-
-
 ### Networking
 - [Add list of network requests by screen ]
 - [Create basic snippets for each Parse network request]
