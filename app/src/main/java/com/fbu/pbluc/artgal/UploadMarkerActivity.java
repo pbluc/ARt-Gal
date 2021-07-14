@@ -49,6 +49,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
 
     private static final int REFERENCE_IMG_REQUEST_CODE = 1; // onActivityResult request
     private static final int AUGMENTED_OBJ_REQUEST_CODE = 2;
+    private static int UPLOAD_STORAGE_STATUS = 0;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
@@ -134,8 +135,65 @@ public class UploadMarkerActivity extends AppCompatActivity {
                         public void onSuccess(DocumentReference documentReference) {
                             Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
 
-                            // TODO: Upload files to Firebase Storage
-                            uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId());
+                            if(uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId()) != 0) {
+                                // Files were not added to storage and must delete created marker document
+                                currentUserDoc.collection("uploadedMarkers").document(documentReference.getId())
+                                        .delete()
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                Log.i(TAG, "DocumentSnapshot successfully deleted!");
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Log.e(TAG, "Error deleting document", e);
+                                            }
+                                        });
+                            } else {
+                                // Files were added to storage and update field updatedAt for user doc
+                                //  and rename file names of marker and augmented object in marker document
+                                //  as well as its updatedAt field.
+                                Object newUpdateDateTime = FieldValue.serverTimestamp();
+                                currentUserDoc
+                                        .update("updatedAt", newUpdateDateTime)
+                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                            @Override
+                                            public void onSuccess(Void unused) {
+                                                String updatedReferenceImgFileName = currentUser.getUid() + "_" + documentReference.getId() + getFileName(referenceImgUri);
+                                                String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + documentReference.getId() + getFileName(augmentedObjUri);
+                                                currentUserDoc.collection("uploadedMarkers").document(documentReference.getId())
+                                                        .update(
+                                                                "augmentedObj", updatedAugmentedObjectFileName,
+                                                                "markerImg", updatedReferenceImgFileName,
+                                                                "updatedAt", newUpdateDateTime
+                                                        )
+                                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                                            @Override
+                                                            public void onSuccess(Void unused) {
+                                                                marker.setMarkerImg(updatedReferenceImgFileName);
+                                                                marker.setAugmentedObj(updatedAugmentedObjectFileName);
+                                                                Log.i(TAG, "Successfully updated both user and marker documents!");
+
+                                                                Toast.makeText(UploadMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+                                                            }
+                                                        })
+                                                        .addOnFailureListener(new OnFailureListener() {
+                                                            @Override
+                                                            public void onFailure(@NonNull Exception e) {
+                                                                Log.e(TAG, "Error updating marker document", e);
+                                                            }
+                                                        });
+                                            }
+                                        })
+                                        .addOnFailureListener(new OnFailureListener() {
+                                            @Override
+                                            public void onFailure(@NonNull Exception e) {
+                                                Log.e(TAG, "Error updating user document", e);
+                                            }
+                                        });
+                            }
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -152,7 +210,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
 
     }
 
-    private void uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String id) {
+    private int uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String id) {
         // Create child references
         referenceImagesReference = storageReference.child("referenceImages/" + currentUser.getUid() + "_" + id + getFileName(referenceImgUri));
         augmentedObjReference = storageReference.child("augmentedObjects/" + currentUser.getUid() + "_" + id + getFileName(augmentedObjUri));
@@ -163,6 +221,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
                     public void onFailure(@NonNull Exception e) {
                         // Handle unsuccessful uploads
                         Log.e(TAG, "Unable to upload reference image to storage", e);
+                        UPLOAD_STORAGE_STATUS = -1;
                     }
                 })
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -173,12 +232,7 @@ public class UploadMarkerActivity extends AppCompatActivity {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
                                         Log.e(TAG, "Unable to upload augmented object to storage", e);
-                                    }
-                                })
-                                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                                    @Override
-                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                                        Toast.makeText(UploadMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+                                        UPLOAD_STORAGE_STATUS = -1;
                                     }
                                 });
                     }
@@ -187,7 +241,10 @@ public class UploadMarkerActivity extends AppCompatActivity {
         etDescription.setText("");
         ivReferenceImage.setImageResource(0);
         tvSelectedAugmentedObject.setText("Only .fbx, .obj, .gltf, .glb assets");
+
+        return UPLOAD_STORAGE_STATUS;
     }
+
 
     @Override
     protected void onStart() {

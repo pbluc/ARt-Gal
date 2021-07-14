@@ -9,6 +9,7 @@ public class User {
     private String password;
     private Object createdAt;
     private Object updatedAt;
+    private String uid;
 
     public User() {
     }
@@ -68,5 +69,13 @@ public class User {
 
     public void setUpdatedAt(Object updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setUid(String uid) {
+        this.uid = uid;
     }
 }
