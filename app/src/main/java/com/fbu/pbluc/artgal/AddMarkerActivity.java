@@ -263,7 +263,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     }
 
     private void openFileChooser(View v) {
-        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
         switch (v.getId()) {
             case R.id.btnFindReferenceImg:
                 String[] referenceImgMimeTypes = {"image/jpeg", "image/png"};

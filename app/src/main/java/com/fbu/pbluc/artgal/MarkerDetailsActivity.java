@@ -7,7 +7,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -35,6 +37,9 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseStorage firebaseStorage;
     private FirebaseFirestore firebaseFirestore;
+    private FirebaseUser currentUser;
+
+    private DocumentReference markerRef;
 
     private TextView tvTitle;
     private TextView tvDescription;
@@ -43,6 +48,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     private TextView tvUserFullName;
     private TextView tvUsername;
     private ImageView ivReferenceImageMedia;
+    private LinearLayout deleteMarkerLayoutContainer;
 
     private Marker marker;
 
@@ -54,6 +60,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         firebaseStorage = FirebaseStorage.getInstance();
         firebaseFirestore = FirebaseFirestore.getInstance();
+        currentUser = firebaseAuth.getCurrentUser();
 
         tvTitle = findViewById(R.id.tvTitle);
         tvDescription = findViewById(R.id.tvDescription);
@@ -62,11 +69,12 @@ public class MarkerDetailsActivity extends AppCompatActivity {
         tvUserFullName = findViewById(R.id.tvUserFullName);
         tvUsername = findViewById(R.id.tvUsername);
         ivReferenceImageMedia = findViewById(R.id.ivReferenceImageMedia);
+        deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
 
         String userUid = getIntent().getStringExtra("userMarkerUid");
         String markerUid = getIntent().getStringExtra("clickedMarkerUid");
 
-        DocumentReference markerRef = firebaseFirestore
+        markerRef = firebaseFirestore
                 .collection("users")
                 .document(userUid)
                 .collection("uploadedMarkers")
@@ -113,6 +121,81 @@ public class MarkerDetailsActivity extends AppCompatActivity {
             }
         });
 
+        if (userUid.equals(currentUser.getUid())) {
+            deleteMarkerLayoutContainer.setVisibility(View.VISIBLE);
+            deleteMarkerLayoutContainer.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    deleteMarkerFilesFromStorage();
+                }
+            });
+        } else {
+            deleteMarkerLayoutContainer.setVisibility(View.GONE);
+        }
+    }
+
+    private void deleteMarkerFilesFromStorage() {
+        // Create a storage reference from our app
+        StorageReference storageReference = firebaseStorage.getReference();
+        // Create a reference to the file to delete
+        StorageReference referenceImg = storageReference.child("referenceImages/" + marker.getMarkerImg().get("fileName").toString());
+        // Delete the file
+        referenceImg
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        // File deleted successfully
+                        Log.i(TAG, "Reference image file was successfully deleted");
+                        StorageReference augmentedObj = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get("fileName").toString());
+                        augmentedObj
+                                .delete()
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        Log.i(TAG, "Both files were successfully deleted");
+                                        deleteMarkerDocument();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.e(TAG, "Augmented object file was not deleted!", e);
+                                    }
+                                });
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        // Uh-oh, an error occurred!
+                        Log.e(TAG, "Reference image file was not deleted!", e);
+                    }
+                });
+    }
+
+    private void deleteMarkerDocument() {
+        markerRef
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        Log.i(TAG, "Marker document successfully deleted!");
+                        goUploadedMarkersActivity();
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Error deleting marker document", e);
+                    }
+                });
+    }
+
+    private void goUploadedMarkersActivity() {
+        Intent i = new Intent(MarkerDetailsActivity.this, UploadedMarkersActivity.class);
+        startActivity(i);
+        finish();
     }
 
     @Override
@@ -124,6 +207,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
             goLoginActivity();
         }
     }
+
     private void goLoginActivity() {
         Intent i = new Intent(this, LoginActivity.class);
         startActivity(i);

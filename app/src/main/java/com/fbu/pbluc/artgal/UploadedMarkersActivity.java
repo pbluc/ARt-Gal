@@ -10,8 +10,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
+import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
@@ -31,8 +33,12 @@ import java.util.List;
 public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
 
     private static final String TAG = "UploadedMarkersActivity";
+    public final int QUERY_LIMIT = 5;
+
     private RecyclerView rvMarkers;
     private ImageView ivAddMarker;
+
+    private EndlessRecyclerViewScrollListener scrollListener;
 
     private List<Marker> markers;
     private MarkersAdapter adapter;
@@ -40,6 +46,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
     private FirebaseFirestore firebaseFirestore;
+    private CollectionReference markersRef;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +57,12 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         currentUser = firebaseAuth.getCurrentUser();
         firebaseFirestore = FirebaseFirestore.getInstance();
 
+        // Create a reference to the uploadedMarkers subcollection
+        markersRef = firebaseFirestore
+                .collection("users")
+                .document(currentUser.getUid())
+                .collection("uploadedMarkers");
+
         rvMarkers = findViewById(R.id.rvMarkers);
         ivAddMarker = findViewById(R.id.ivAddMarker);
 
@@ -59,8 +72,17 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
         // Attach the adapter to the recyclerview to populate items
         rvMarkers.setAdapter(adapter);
-        // Set layout manager o position the items
-        rvMarkers.setLayoutManager(new LinearLayoutManager(this));
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        // Set layout manager to position the items
+        rvMarkers.setLayoutManager(linearLayoutManager);
+
+        scrollListener = new EndlessRecyclerViewScrollListener(linearLayoutManager) {
+            @Override
+            public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
+                Log.i(TAG, "Loading data using scrollListener");
+                loadNextDataFromDatabase();
+            }
+        };
 
         ivAddMarker.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -69,7 +91,38 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
             }
         });
 
+        rvMarkers.addOnScrollListener(scrollListener);
+
         queryMarkers();
+    }
+
+    private void loadNextDataFromDatabase() {
+        // Send the request
+        Task<QuerySnapshot> query = markersRef
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .whereLessThan("createdAt", markers.get(markers.size() - 1).getCreatedAt())
+                .limit(QUERY_LIMIT)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            // Deserialize and construct new model objects from the query response
+                            List<Marker> resultMarkers = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Marker resultMarker = document.toObject(Marker.class);
+                                resultMarkers.add(resultMarker);
+                            }
+                            int positionInserted = markers.size();
+                            // Append the new data objects to the existing set of items inside the array of items
+                            markers.addAll(resultMarkers);
+                            // Notify the adapter of the new items made with 'notifyItemRangeInserted()'
+                            adapter.notifyItemRangeInserted(positionInserted, resultMarkers.size());
+                        } else {
+                            Log.e(TAG, "Error getting marker documents", task.getException());
+                        }
+                    }
+                });
     }
 
     private void goAddMarkerActivity() {
@@ -78,16 +131,10 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     }
 
     private void queryMarkers() {
-        // Create a reference to the uploadedMarkers subcollection
-        CollectionReference markersRef = firebaseFirestore
-                .collection("users")
-                .document(currentUser.getUid())
-                .collection("uploadedMarkers");
-
         // Create a query against the collection
         Task<QuerySnapshot> query = markersRef
                 .orderBy("createdAt", Query.Direction.DESCENDING)
-                .limit(20)
+                .limit(QUERY_LIMIT)
                 .get()
                 .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
                     @Override
