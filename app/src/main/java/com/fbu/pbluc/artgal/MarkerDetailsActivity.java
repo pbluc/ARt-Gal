@@ -82,13 +82,13 @@ public class MarkerDetailsActivity extends AppCompatActivity {
                 tvTitle.setText(marker.getTitle());
                 tvDescription.setText(marker.getDescription());
                 tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
-                tvCreatedAt.setText(marker.getCreatedAt());
+                tvCreatedAt.setText(marker.formattedCreatedAt());
 
                 markerUser.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
                     @Override
                     public void onSuccess(DocumentSnapshot documentSnapshot) {
                         User user = documentSnapshot.toObject(User.class);
-                        tvUserFullName.setText(user.getName().get("fName").toString() + user.getName().get("lName").toString());
+                        tvUserFullName.setText(user.getName().get("fName").toString() + " " + user.getName().get("lName").toString());
                         tvUsername.setText(user.getUsername());
                     }
                 });

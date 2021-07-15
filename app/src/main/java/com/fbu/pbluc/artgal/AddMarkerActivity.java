@@ -179,6 +179,8 @@ public class AddMarkerActivity extends AppCompatActivity {
                                                                 Log.i(TAG, "Successfully updated both user and marker documents!");
 
                                                                 Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+
+
                                                             }
                                                         })
                                                         .addOnFailureListener(new OnFailureListener() {

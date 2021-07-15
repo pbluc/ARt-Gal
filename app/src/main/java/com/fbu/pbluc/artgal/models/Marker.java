@@ -69,12 +69,8 @@ public class Marker {
         this.augmentedObj = augmentedObj;
     }
 
-    public String getCreatedAt() {
-        Date createdDate = ((Timestamp) createdAt).toDate();
-        String markerFormat = "EEE, MMM dd, yyyy hh:mm aa";
-        DateFormat dateFormat = new SimpleDateFormat(markerFormat, Locale.ENGLISH);
-        dateFormat.setLenient(true);
-        return dateFormat.format(createdDate);
+    public Object getCreatedAt() {
+        return createdAt;
     }
 
     public void setCreatedAt(Object createdAt) {
@@ -87,6 +83,14 @@ public class Marker {
 
     public void setUpdatedAt(Object updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String formattedCreatedAt() {
+        Date createdDate = ((Timestamp) createdAt).toDate();
+        String markerFormat = "EEE, MMM dd, yyyy hh:mm aa";
+        DateFormat dateFormat = new SimpleDateFormat(markerFormat, Locale.ENGLISH);
+        dateFormat.setLenient(true);
+        return dateFormat.format(createdDate);
     }
 
     public String calculateTimeAgo() {
