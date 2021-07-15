@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ARtGal"
         android:usesCleartextTraffic="true">
-        <activity android:name=".MarkerDetails"></activity>
+        <activity android:name=".MarkerDetailsActivity"></activity>
         <activity android:name=".UploadedMarkersActivity" />
         <activity android:name=".AddMarkerActivity" />
         <activity android:name=".CreateAccountActivity" />

@@ -99,7 +99,6 @@ public class CreateAccountActivity extends AppCompatActivity {
 
                                     DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(firebaseUser.getUid());
                                     currentUserDoc.set(user);
-                                    user.setUid(firebaseUser.getUid());
 
                                     goMainActivity();
                                 } else {

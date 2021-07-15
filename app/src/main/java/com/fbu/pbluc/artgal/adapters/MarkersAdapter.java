@@ -54,13 +54,11 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-        private FirebaseStorage firebaseStorage;
 
         private TextView tvTitle;
         private TextView tvDescription;
         private TextView tvAugmentedObjectFileName;
         private TextView tvCreatedAt;
-        private ImageView ivReferenceImage;
 
         public ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -69,36 +67,15 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
             tvDescription = itemView.findViewById(R.id.tvDescription);
             tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
             tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
-            ivReferenceImage = itemView.findViewById(R.id.ivReferenceImg);
 
             itemView.setOnClickListener(this);
-
-            firebaseStorage = FirebaseStorage.getInstance();
         }
 
         public void bind(Marker marker) {
             tvTitle.setText(marker.getTitle());
             tvDescription.setText(marker.getDescription());
             tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
-            tvCreatedAt.setText(marker.calculateTimeAgo());
-
-            StorageReference storageReference = firebaseStorage.getReference();
-            StorageReference markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get("fileName").toString());
-
-            markerImgReference
-                    .getDownloadUrl()
-                    .addOnSuccessListener(new OnSuccessListener<Uri>() {
-                        @Override
-                        public void onSuccess(Uri uri) {
-                            Glide.with(mContext).load(uri).into(ivReferenceImage);
-                        }
-                    })
-                    .addOnFailureListener(new OnFailureListener() {
-                        @Override
-                        public void onFailure(@NonNull Exception e) {
-                            Log.e("MarkersAdapter", "Could not get download url of marker img", e);
-                        }
-                    });
+            tvCreatedAt.setText("Created " + marker.calculateTimeAgo());
         }
 
         @Override

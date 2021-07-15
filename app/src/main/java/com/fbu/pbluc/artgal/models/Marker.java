@@ -5,6 +5,9 @@ import android.util.Log;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
+
+import org.parceler.Parcel;
 
 import java.text.DateFormat;
 import java.text.ParseException;

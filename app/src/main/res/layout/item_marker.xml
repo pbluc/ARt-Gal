@@ -8,14 +8,14 @@
 
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="273dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Jelly Fish Under Night Sea"
         android:textSize="20sp" />
 
     <TextView
         android:id="@+id/tvDescription"
-        android:layout_width="274dp"
+        android:layout_width="234dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/tvTitle"
         android:layout_marginTop="-1dp"
@@ -26,7 +26,7 @@
         android:id="@+id/linearLayoutContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvDescription"
+        android:layout_toRightOf="@id/tvTitle"
         android:layout_marginTop="25dp"
         android:layout_marginStart="25dp">
 
@@ -39,7 +39,7 @@
 
         <TextView
             android:id="@+id/tvAugmentedObjectFileName"
-            android:layout_width="217dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_below="@id/tvDescription"
             android:layout_gravity="center_vertical"
@@ -48,22 +48,13 @@
             android:textSize="16sp" />
     </LinearLayout>
 
-    <ImageView
-        android:id="@+id/ivReferenceImg"
-        android:layout_width="100dp"
-        android:layout_height="100dp"
-        android:scaleType="centerCrop"
-        android:layout_below="@+id/tvTitle"
-        android:layout_alignParentEnd="true"
-        android:src="@drawable/canvas_jellyfish"
-        />
-
     <TextView
         android:id="@+id/tvCreatedAt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="July 14, 2021 at 10:29 AM"
+        android:text="Created 5h"
         android:textSize="12sp"
-        android:layout_below="@id/ivReferenceImg" />
+        android:layout_marginTop="10dp"
+        android:layout_below="@id/tvDescription" />
 
 </RelativeLayout>

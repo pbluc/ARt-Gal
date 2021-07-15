@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
@@ -19,6 +20,8 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
+
+import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -90,5 +93,10 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     @Override
     public void onListItemClick(int position) {
         // Start intent to go to marker details activity
+        Marker clickedMarker = markers.get(position);
+        Intent intent = new Intent(UploadedMarkersActivity.this, MarkerDetailsActivity.class);
+        intent.putExtra("userMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(0, 28));
+        intent.putExtra("clickedMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(29, 49));
+        startActivity(intent);
     }
 }
