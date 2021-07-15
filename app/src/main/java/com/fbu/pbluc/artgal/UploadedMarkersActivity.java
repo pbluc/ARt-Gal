@@ -8,6 +8,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
 
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.models.Marker;
@@ -30,6 +32,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     private static final String TAG = "UploadedMarkersActivity";
     private RecyclerView rvMarkers;
+    private ImageView ivAddMarker;
+
     private List<Marker> markers;
     private MarkersAdapter adapter;
 
@@ -47,6 +51,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         firebaseFirestore = FirebaseFirestore.getInstance();
 
         rvMarkers = findViewById(R.id.rvMarkers);
+        ivAddMarker = findViewById(R.id.ivAddMarker);
 
         // Initialize markers
         markers = new ArrayList<>();
@@ -57,7 +62,19 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         // Set layout manager o position the items
         rvMarkers.setLayoutManager(new LinearLayoutManager(this));
 
+        ivAddMarker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                goAddMarkerActivity();
+            }
+        });
+
         queryMarkers();
+    }
+
+    private void goAddMarkerActivity() {
+        Intent intent = new Intent(UploadedMarkersActivity.this, AddMarkerActivity.class);;
+        startActivity(intent);
     }
 
     private void queryMarkers() {

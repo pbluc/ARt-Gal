@@ -180,7 +180,9 @@ public class AddMarkerActivity extends AppCompatActivity {
 
                                                                 Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
 
-
+                                                                Intent intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
+                                                                startActivity(intent);
+                                                                finish();
                                                             }
                                                         })
                                                         .addOnFailureListener(new OnFailureListener() {
