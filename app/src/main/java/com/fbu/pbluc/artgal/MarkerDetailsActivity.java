@@ -194,13 +194,14 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     }
 
     private void deleteMarkerDocument() {
+        String deletedMarkerId = markerRef.getId();
         markerRef
                 .delete()
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                     @Override
                     public void onSuccess(Void unused) {
                         Log.i(TAG, "Marker document successfully deleted!");
-                        goUploadedMarkersActivity();
+                        goUploadedMarkersActivity(deletedMarkerId);
                     }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -211,9 +212,10 @@ public class MarkerDetailsActivity extends AppCompatActivity {
                 });
     }
 
-    private void goUploadedMarkersActivity() {
-        Intent i = new Intent(MarkerDetailsActivity.this, UploadedMarkersActivity.class);
-        startActivity(i);
+    private void goUploadedMarkersActivity(String deletedMarkerId) {
+        Intent i = new Intent();
+        i.putExtra("deletedMarkerUid", deletedMarkerId);
+        setResult(RESULT_OK, i);
         finish();
     }
 

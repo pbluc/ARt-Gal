@@ -3,6 +3,8 @@ package com.fbu.pbluc.artgal.models;
 import android.net.Uri;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FieldValue;
@@ -83,6 +85,12 @@ public class Marker {
 
     public void setUpdatedAt(Object updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    @NonNull
+    @Override
+    public String toString() {
+        return "{ " + title + "} ";
     }
 
     public String formattedCreatedAt() {

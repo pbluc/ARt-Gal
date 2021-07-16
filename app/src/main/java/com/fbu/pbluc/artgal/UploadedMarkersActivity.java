@@ -21,6 +21,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -30,11 +31,13 @@ import org.parceler.Parcels;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
 
     private static final String TAG = "UploadedMarkersActivity";
-    private static final int REQUEST_CODE = 20;
+    private static final int NEW_MARKER_REQUEST_CODE = 20;
+    private static final int DELETE_MARKER_CODE = 30;
     public final int QUERY_LIMIT = 5;
 
     private RecyclerView rvMarkers;
@@ -69,7 +72,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         ivAddMarker = findViewById(R.id.ivAddMarker);
 
         // Initialize markers
-        markers = new ArrayList<>();
+        markers = new CopyOnWriteArrayList<>();
         // Create adapter
         adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
         // Attach the adapter to the recyclerview to populate items
@@ -129,15 +132,67 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     private void goAddMarkerActivity() {
         Intent intent = new Intent(UploadedMarkersActivity.this, AddMarkerActivity.class);
-        startActivity(intent);
-        finish();
+        intent.putExtra("flag", "UploadedMarkers");
+        startActivityForResult(intent, NEW_MARKER_REQUEST_CODE);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if(requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
-            // Get data from the intent (marker)
-            // Update the recycler view with the marker
+        if(resultCode == RESULT_OK) {
+            switch (requestCode) {
+                case NEW_MARKER_REQUEST_CODE:
+                    if(data != null) {
+                        // Get data from the intent (marker)
+                        String newMarkerUid = data.getStringExtra("newMarkerUid");
+                        Log.i(TAG, "newMarkerUid: " + newMarkerUid);
+                        markersRef
+                                .document(newMarkerUid)
+                                .get()
+                                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                                    @Override
+                                    public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                                        if(task.isSuccessful()) {
+                                            DocumentSnapshot documentSnapshot = task.getResult();
+                                            if(documentSnapshot.exists()) {
+                                                Marker newMarker = documentSnapshot.toObject(Marker.class);
+
+                                                // Update the recycler view with the marker
+                                                // Modify data source of tweets
+                                                markers.add(0, newMarker);
+                                                // Update the adapter
+                                                adapter.notifyItemInserted(0);
+                                                Log.i(TAG, "Markers: " + markers.toString());
+                                            } else {
+                                                Log.e(TAG, "No such document");
+                                            }
+                                        } else {
+                                            Log.e(TAG, "get new marker document failed with ", task.getException());
+                                        }
+                                    }
+                                });
+                    }
+                    break;
+                case DELETE_MARKER_CODE:
+                    if(data != null) {
+                        String deletedMarkerUid = data.getStringExtra("deletedMarkerUid");
+                        Log.i(TAG, "deletedMarkerUid: " + deletedMarkerUid);
+
+                        int index = 0;
+                        for(Marker m : markers) {
+                            if(m.getMarkerImg().get("fileName").toString().substring(29, 49).equals(deletedMarkerUid)) {
+                                markers.remove(m);
+                                adapter.notifyItemRemoved(index);
+                                Log.i(TAG, "removed marker at index: " + index);
+                            }
+                            index += 1;
+                        }
+
+                        Log.i(TAG, "Markers: " + markers.toString());
+                    }
+                    break;
+                default:
+                    break;
+            }
         }
         super.onActivityResult(requestCode, resultCode, data);
     }
@@ -173,7 +228,6 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         Intent intent = new Intent(UploadedMarkersActivity.this, MarkerDetailsActivity.class);
         intent.putExtra("userMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(0, 28));
         intent.putExtra("clickedMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(29, 49));
-        startActivity(intent);
-        finish();
+        startActivityForResult(intent, DELETE_MARKER_CODE);
     }
 }
