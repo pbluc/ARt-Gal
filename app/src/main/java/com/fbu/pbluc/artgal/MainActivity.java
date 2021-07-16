@@ -15,77 +15,77 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
-    private final static String TAG = "MainActivity";
+  private final static String TAG = "MainActivity";
 
-    private FirebaseAuth firebaseAuth;
+  private FirebaseAuth firebaseAuth;
 
-    private Button btnLogout;
-    private Button btnUploadMarker;
-    private Button btnViewMarker;
+  private Button btnLogout;
+  private Button btnUploadMarker;
+  private Button btnViewMarker;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.activity_main);
 
-        firebaseAuth = FirebaseAuth.getInstance();
+    firebaseAuth = FirebaseAuth.getInstance();
 
-        btnLogout = findViewById(R.id.btnLogout);
-        btnUploadMarker = findViewById(R.id.btnUploadMarker);
-        btnViewMarker = findViewById(R.id.btnViewMarkers);
+    btnLogout = findViewById(R.id.btnLogout);
+    btnUploadMarker = findViewById(R.id.btnUploadMarker);
+    btnViewMarker = findViewById(R.id.btnViewMarkers);
 
 
-        btnLogout.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                logoutUser();
-            }
-        });
+    btnLogout.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        logoutUser();
+      }
+    });
 
-        btnUploadMarker.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                goUploadActivity();
-            }
-        });
+    btnUploadMarker.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        goUploadActivity();
+      }
+    });
 
-        btnViewMarker.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                goMarkersActivity();
-            }
-        });
+    btnViewMarker.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        goMarkersActivity();
+      }
+    });
 
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+    // Check if user is signed in (non-null) and update UI accordingly.
+    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+    if (currentUser == null) {
+      goLoginActivity();
     }
+  }
 
-    @Override
-    protected void onStart() {
-        super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        if (currentUser == null) {
-            goLoginActivity();
-        }
-    }
+  private void goMarkersActivity() {
+    Intent i = new Intent(this, UploadedMarkersActivity.class);
+    startActivity(i);
+  }
 
-    private void goMarkersActivity() {
-        Intent i = new Intent(this, UploadedMarkersActivity.class);
-        startActivity(i);
-    }
+  private void goUploadActivity() {
+    Intent i = new Intent(this, AddMarkerActivity.class);
+    startActivity(i);
+  }
 
-    private void goUploadActivity() {
-        Intent i = new Intent(this, AddMarkerActivity.class);
-        startActivity(i);
-    }
+  private void goLoginActivity() {
+    Intent i = new Intent(this, LoginActivity.class);
+    startActivity(i);
+    finish();
+  }
 
-    private void goLoginActivity() {
-        Intent i = new Intent(this, LoginActivity.class);
-        startActivity(i);
-        finish();
-    }
-
-    private void logoutUser() {
-        FirebaseAuth.getInstance().signOut();
-        goLoginActivity();
-    }
+  private void logoutUser() {
+    FirebaseAuth.getInstance().signOut();
+    goLoginActivity();
+  }
 }

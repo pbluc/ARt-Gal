@@ -24,84 +24,84 @@ import java.util.List;
 
 public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHolder> {
 
-    private List<Marker> mMarkers;
-    private Context mContext;
+  private List<Marker> mMarkers;
+  private Context mContext;
 
-    final private ListItemClickListener mOnClickListener;
+  final private ListItemClickListener mOnClickListener;
 
-    public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener) {
-        this.mMarkers = mMarkers;
-        this.mContext = mContext;
-        this.mOnClickListener = onClickListener;
+  public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener) {
+    this.mMarkers = mMarkers;
+    this.mContext = mContext;
+    this.mOnClickListener = onClickListener;
+  }
+
+  @NonNull
+  @Override
+  public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    View view = LayoutInflater.from(mContext).inflate(R.layout.item_marker, parent, false);
+    return new ViewHolder(view);
+  }
+
+  @Override
+  public void onBindViewHolder(@NonNull MarkersAdapter.ViewHolder holder, int position) {
+    Marker marker = mMarkers.get(position);
+    holder.bind(marker);
+  }
+
+  @Override
+  public int getItemCount() {
+    return mMarkers.size();
+  }
+
+  // Clean all elements of the recycler
+  public void clear() {
+    mMarkers.clear();
+    notifyDataSetChanged();
+  }
+
+  // Add a list of items
+  public void addAll(List<Marker> markers) {
+    mMarkers.addAll(markers);
+    notifyDataSetChanged();
+  }
+
+  public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+
+    private TextView tvTitle;
+    private TextView tvDescription;
+    private TextView tvAugmentedObjectFileName;
+    private TextView tvCreatedAt;
+
+    public ViewHolder(@NonNull View itemView) {
+      super(itemView);
+
+      tvTitle = itemView.findViewById(R.id.tvTitle);
+      tvDescription = itemView.findViewById(R.id.tvDescription);
+      tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
+      tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
+
+      itemView.setOnClickListener(this);
     }
 
-    @NonNull
+    public void bind(Marker marker) {
+      tvTitle.setText(marker.getTitle());
+      tvDescription.setText(marker.getDescription());
+      tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
+      tvCreatedAt.setText("Created " + marker.calculateTimeAgo());
+    }
+
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(mContext).inflate(R.layout.item_marker, parent, false);
-        return new ViewHolder(view);
+    public void onClick(View view) {
+      int position = getAdapterPosition();
+      switch (view.getId()) {
+        default:
+          mOnClickListener.onListItemClick(position);
+          break;
+      }
     }
+  }
 
-    @Override
-    public void onBindViewHolder(@NonNull MarkersAdapter.ViewHolder holder, int position) {
-        Marker marker = mMarkers.get(position);
-        holder.bind(marker);
-    }
-
-    @Override
-    public int getItemCount() {
-        return mMarkers.size();
-    }
-
-    // Clean all elements of the recycler
-    public void clear() {
-        mMarkers.clear();
-        notifyDataSetChanged();
-    }
-
-    // Add a list of items
-    public void addAll(List<Marker> markers) {
-        mMarkers.addAll(markers);
-        notifyDataSetChanged();
-    }
-
-    public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
-
-        private TextView tvTitle;
-        private TextView tvDescription;
-        private TextView tvAugmentedObjectFileName;
-        private TextView tvCreatedAt;
-
-        public ViewHolder(@NonNull View itemView) {
-            super(itemView);
-
-            tvTitle = itemView.findViewById(R.id.tvTitle);
-            tvDescription = itemView.findViewById(R.id.tvDescription);
-            tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
-            tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
-
-            itemView.setOnClickListener(this);
-        }
-
-        public void bind(Marker marker) {
-            tvTitle.setText(marker.getTitle());
-            tvDescription.setText(marker.getDescription());
-            tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
-            tvCreatedAt.setText("Created " + marker.calculateTimeAgo());
-        }
-
-        @Override
-        public void onClick(View view) {
-            int position = getAdapterPosition();
-            switch (view.getId()) {
-                default:
-                    mOnClickListener.onListItemClick(position);
-                    break;
-            }
-        }
-    }
-
-    public interface ListItemClickListener {
-        void onListItemClick(int position);
-    }
+  public interface ListItemClickListener {
+    void onListItemClick(int position);
+  }
 }
