@@ -74,6 +74,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
         String userUid = getIntent().getStringExtra("userMarkerUid");
         String markerUid = getIntent().getStringExtra("clickedMarkerUid");
 
+
         markerRef = firebaseFirestore
                 .collection("users")
                 .document(userUid)
@@ -103,6 +104,24 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
                 StorageReference storageReference = firebaseStorage.getReference();
                 StorageReference markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get("fileName").toString());
+
+                // Check if the augmented object file exists in Firebase Storage
+                StorageReference augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get("fileName").toString());
+                augmentedObjReference
+                        .getDownloadUrl()
+                        .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                            @Override
+                            public void onSuccess(Uri uri) {
+                                Log.i(TAG,"Augmented object file found!");
+                            }
+                        })
+                        .addOnFailureListener(new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                // File not found
+                                Log.e(TAG, "Augmented object file not found", e);
+                            }
+                        });
 
                 markerImgReference
                         .getDownloadUrl()

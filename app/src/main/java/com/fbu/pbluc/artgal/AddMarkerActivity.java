@@ -4,8 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
@@ -264,6 +266,8 @@ public class AddMarkerActivity extends AppCompatActivity {
 
     private void openFileChooser(View v) {
         Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         switch (v.getId()) {
             case R.id.btnFindReferenceImg:
                 String[] referenceImgMimeTypes = {"image/jpeg", "image/png"};
@@ -290,12 +294,11 @@ public class AddMarkerActivity extends AppCompatActivity {
                     if (data != null) {
                         // Get the URI of the selected file
                         referenceImgUri = data.getData();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            this.getContentResolver().takePersistableUriPermission(referenceImgUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        }
                         Log.i(TAG, "Uri: " + referenceImgUri.toString());
                         try {
-                            // Get the file path from the URI
-                            final String path = referenceImgUri.getPath();
-                            Toast.makeText(this, "File selected: " + path, Toast.LENGTH_SHORT).show();
-
                             // Set selected image to imageView
                             Glide.with(this).load(referenceImgUri).into(ivReferenceImage);
 
@@ -312,6 +315,9 @@ public class AddMarkerActivity extends AppCompatActivity {
                     if (data != null) {
                         // Get the URI of the selected file
                         augmentedObjUri = data.getData();
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                            this.getContentResolver().takePersistableUriPermission(augmentedObjUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+                        }
                         Log.i(TAG, "Uri: " + augmentedObjUri.toString());
                         try {
                             // Set selected augmented object file name to TextView
