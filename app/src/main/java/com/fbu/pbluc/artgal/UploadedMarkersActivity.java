@@ -1,6 +1,7 @@
 package com.fbu.pbluc.artgal;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,6 +34,7 @@ import java.util.List;
 public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
 
     private static final String TAG = "UploadedMarkersActivity";
+    private static final int REQUEST_CODE = 20;
     public final int QUERY_LIMIT = 5;
 
     private RecyclerView rvMarkers;
@@ -126,8 +128,18 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     }
 
     private void goAddMarkerActivity() {
-        Intent intent = new Intent(UploadedMarkersActivity.this, AddMarkerActivity.class);;
+        Intent intent = new Intent(UploadedMarkersActivity.this, AddMarkerActivity.class);
         startActivity(intent);
+        finish();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if(requestCode == REQUEST_CODE && resultCode == RESULT_OK) {
+            // Get data from the intent (marker)
+            // Update the recycler view with the marker
+        }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     private void queryMarkers() {
@@ -162,5 +174,6 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         intent.putExtra("userMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(0, 28));
         intent.putExtra("clickedMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(29, 49));
         startActivity(intent);
+        finish();
     }
 }

@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Build;
@@ -22,7 +21,6 @@ import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -41,7 +39,6 @@ public class AddMarkerActivity extends AppCompatActivity {
 
     private static final int REFERENCE_IMG_REQUEST_CODE = 1; // onActivityResult request
     private static final int AUGMENTED_OBJ_REQUEST_CODE = 2;
-    private int UPLOAD_STORAGE_STATUS = 0;
 
     private FirebaseAuth firebaseAuth;
     private FirebaseUser currentUser;
@@ -135,73 +132,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                         public void onSuccess(DocumentReference documentReference) {
                             Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
 
-                            if (uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId()) != 0) {
-                                // Files were not added to storage and must delete created marker document
-                                currentUserDoc.collection("uploadedMarkers").document(documentReference.getId())
-                                        .delete()
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void unused) {
-                                                Log.i(TAG, "DocumentSnapshot successfully deleted!");
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                Log.e(TAG, "Error deleting document", e);
-                                            }
-                                        });
-                            } else {
-                                // Files were added to storage and update field updatedAt for user doc
-                                //  and rename file names of marker and augmented object in marker document
-                                //  as well as its updatedAt field.
-                                Object newUpdateDateTime = FieldValue.serverTimestamp();
-                                currentUserDoc
-                                        .update("updatedAt", newUpdateDateTime)
-                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                            @Override
-                                            public void onSuccess(Void unused) {
-                                                String updatedReferenceImgFileName = currentUser.getUid() + "_" + documentReference.getId() + getFileName(referenceImgUri);
-                                                String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + documentReference.getId() + getFileName(augmentedObjUri);
-                                                currentUserDoc.collection("uploadedMarkers").document(documentReference.getId())
-                                                        .update(
-                                                                "augmentedObj.fileName", updatedAugmentedObjectFileName,
-                                                                "markerImg.fileName", updatedReferenceImgFileName,
-                                                                "updatedAt", newUpdateDateTime
-                                                        )
-                                                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                                                            @Override
-                                                            public void onSuccess(Void unused) {
-                                                                Map<String, Object> updatedMarkerImg = marker.getMarkerImg();
-                                                                updatedMarkerImg.put("fileName", updatedReferenceImgFileName);
-                                                                marker.setMarkerImg(updatedMarkerImg);
-                                                                Map<String, Object> updatedAugmentedObj = marker.getAugmentedObj();
-                                                                updatedAugmentedObj.put("fileName", updatedAugmentedObjectFileName);
-                                                                marker.setAugmentedObj(updatedAugmentedObj);
-                                                                Log.i(TAG, "Successfully updated both user and marker documents!");
-
-                                                                Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
-
-                                                                Intent intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
-                                                                startActivity(intent);
-                                                                finish();
-                                                            }
-                                                        })
-                                                        .addOnFailureListener(new OnFailureListener() {
-                                                            @Override
-                                                            public void onFailure(@NonNull Exception e) {
-                                                                Log.e(TAG, "Error updating marker document", e);
-                                                            }
-                                                        });
-                                            }
-                                        })
-                                        .addOnFailureListener(new OnFailureListener() {
-                                            @Override
-                                            public void onFailure(@NonNull Exception e) {
-                                                Log.e(TAG, "Error updating user document", e);
-                                            }
-                                        });
-                            }
+                            uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId(), currentUserDoc, marker);
                         }
                     })
                     .addOnFailureListener(new OnFailureListener() {
@@ -218,39 +149,119 @@ public class AddMarkerActivity extends AppCompatActivity {
 
     }
 
-    private int uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String id) {
+    private void uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String id, DocumentReference userDoc, Marker m) {
         // Create child references
         referenceImagesReference = storageReference.child("referenceImages/" + currentUser.getUid() + "_" + id + getFileName(referenceImgUri));
         augmentedObjReference = storageReference.child("augmentedObjects/" + currentUser.getUid() + "_" + id + getFileName(augmentedObjUri));
 
-        UploadTask uploadReferenceImgTask = (UploadTask) referenceImagesReference.putFile(referenceUri)
+        referenceImagesReference
+                .putFile(referenceUri)
                 .addOnFailureListener(new OnFailureListener() {
                     @Override
                     public void onFailure(@NonNull Exception e) {
                         // Handle unsuccessful uploads
                         Log.e(TAG, "Unable to upload reference image to storage", e);
-                        UPLOAD_STORAGE_STATUS = -1;
+                        // Files were not added to storage and must delete created marker document
+                        deleteCreatedMarkerDocument(userDoc, id);
                     }
                 })
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                     @Override
                     public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                        UploadTask uploadAugmentedObjTask = (UploadTask) augmentedObjReference.putFile(augmentedUri)
+                        augmentedObjReference
+                                .putFile(augmentedUri)
                                 .addOnFailureListener(new OnFailureListener() {
                                     @Override
                                     public void onFailure(@NonNull Exception e) {
                                         Log.e(TAG, "Unable to upload augmented object to storage", e);
-                                        UPLOAD_STORAGE_STATUS = -1;
+                                        deleteCreatedMarkerDocument(userDoc, id);
+                                    }
+                                })
+                                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                                    @Override
+                                    public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+                                        Log.i(TAG, "Both files were successfully added to storage");
+                                        // Files were added to storage and update field updatedAt for user doc
+                                        //  and rename file names of marker and augmented object in marker document
+                                        //  as well as its updatedAt field.
+                                        updateCreatedMarkerDocument(userDoc, id, m);
                                     }
                                 });
                     }
                 });
+
         etTitle.setText("");
         etDescription.setText("");
         ivReferenceImage.setImageResource(0);
         tvSelectedAugmentedObject.setText("Only .fbx, .obj, .gltf, .glb assets");
+    }
 
-        return UPLOAD_STORAGE_STATUS;
+    private void updateCreatedMarkerDocument(DocumentReference userDoc, String id, Marker m) {
+        Object newUpdateDateTime = FieldValue.serverTimestamp();
+        userDoc
+                .update("updatedAt", newUpdateDateTime)
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        String updatedReferenceImgFileName = currentUser.getUid() + "_" + id + getFileName(referenceImgUri);
+                        String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + id + getFileName(augmentedObjUri);
+                        userDoc
+                                .collection("uploadedMarkers")
+                                .document(id)
+                                .update(
+                                        "augmentedObj.fileName", updatedAugmentedObjectFileName,
+                                        "markerImg.fileName", updatedReferenceImgFileName,
+                                        "updatedAt", newUpdateDateTime
+                                )
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        Map<String, Object> updatedMarkerImg = m.getMarkerImg();
+                                        updatedMarkerImg.put("fileName", updatedReferenceImgFileName);
+                                        m.setMarkerImg(updatedMarkerImg);
+                                        Map<String, Object> updatedAugmentedObj = m.getAugmentedObj();
+                                        updatedAugmentedObj.put("fileName", updatedAugmentedObjectFileName);
+                                        m.setAugmentedObj(updatedAugmentedObj);
+                                        Log.i(TAG, "Successfully updated both user and marker documents!");
+
+                                        Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+
+                                        Intent intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
+                                        startActivity(intent);
+                                        finish();
+                                    }
+                                })
+                                .addOnFailureListener(new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        Log.e(TAG, "Error updating marker document", e);
+                                    }
+                                });
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Error updating user document", e);
+                    }
+                });
+    }
+
+    private void deleteCreatedMarkerDocument(DocumentReference userDoc, String id) {
+        userDoc.collection("uploadedMarkers").document(id)
+                .delete()
+                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                    @Override
+                    public void onSuccess(Void unused) {
+                        Log.i(TAG, "DocumentSnapshot successfully deleted!");
+                    }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                    @Override
+                    public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Error deleting document", e);
+                    }
+                });
     }
 
 
