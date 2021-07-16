@@ -53,6 +53,18 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
         return mMarkers.size();
     }
 
+    // Clean all elements of the recycler
+    public void clear() {
+        mMarkers.clear();
+        notifyDataSetChanged();
+    }
+
+    // Add a list of items
+    public void addAll(List<Marker> markers) {
+        mMarkers.addAll(markers);
+        notifyDataSetChanged();
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
 
         private TextView tvTitle;

@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -27,8 +28,6 @@ import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.firestore.QuerySnapshot;
 
-import org.parceler.Parcels;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -38,10 +37,11 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     private static final String TAG = "UploadedMarkersActivity";
     private static final int NEW_MARKER_REQUEST_CODE = 20;
     private static final int DELETE_MARKER_CODE = 30;
-    public final int QUERY_LIMIT = 5;
+    public final int QUERY_LIMIT = 8;
 
     private RecyclerView rvMarkers;
     private ImageView ivAddMarker;
+    private SwipeRefreshLayout swipeContainer;
 
     private EndlessRecyclerViewScrollListener scrollListener;
 
@@ -70,6 +70,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
         rvMarkers = findViewById(R.id.rvMarkers);
         ivAddMarker = findViewById(R.id.ivAddMarker);
+        swipeContainer = findViewById(R.id.swipeContainer);
 
         // Initialize markers
         markers = new CopyOnWriteArrayList<>();
@@ -89,6 +90,13 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
             }
         };
 
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                fetchUploadedMarkersAsync();
+            }
+        });
+
         ivAddMarker.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -99,6 +107,32 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         rvMarkers.addOnScrollListener(scrollListener);
 
         queryMarkers();
+    }
+
+    private void fetchUploadedMarkersAsync() {
+        Task<QuerySnapshot> query = markersRef
+                .orderBy("createdAt", Query.Direction.DESCENDING)
+                .limit(QUERY_LIMIT)
+                .get()
+                .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+                    @Override
+                    public void onComplete(@NonNull Task<QuerySnapshot> task) {
+                        if (task.isSuccessful()) {
+                            List<Marker> resultMarkers = new ArrayList<>();
+                            for (QueryDocumentSnapshot document : task.getResult()) {
+                                Marker resultMarker = document.toObject(Marker.class);
+                                resultMarkers.add(resultMarker);
+                            }
+                            adapter.clear();
+                            adapter.addAll(resultMarkers);
+                            scrollListener.resetState();
+                            Log.i(TAG, "markers after refresh: " + markers.toString());
+                        } else {
+                            Log.e(TAG, "Error getting marker documents", task.getException());
+                        }
+                        swipeContainer.setRefreshing(false);
+                    }
+                });
     }
 
     private void loadNextDataFromDatabase() {
@@ -123,6 +157,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                             markers.addAll(resultMarkers);
                             // Notify the adapter of the new items made with 'notifyItemRangeInserted()'
                             adapter.notifyItemRangeInserted(positionInserted, resultMarkers.size());
+                            Log.i(TAG, "markers after scrolling: " + markers.toString());
                         } else {
                             Log.e(TAG, "Error getting marker documents", task.getException());
                         }
@@ -161,6 +196,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                                                 markers.add(0, newMarker);
                                                 // Update the adapter
                                                 adapter.notifyItemInserted(0);
+                                                rvMarkers.smoothScrollToPosition(0);
                                                 Log.i(TAG, "Markers: " + markers.toString());
                                             } else {
                                                 Log.e(TAG, "No such document");
@@ -214,6 +250,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                             }
                             markers.addAll(resultMarkers);
                             adapter.notifyDataSetChanged();
+                            Log.i(TAG, "markers after query: " + markers.toString());
                         } else {
                             Log.e(TAG, "Error getting marker documents", task.getException());
                         }

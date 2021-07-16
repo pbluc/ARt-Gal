@@ -28,7 +28,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
-import org.parceler.Parcels;
 import org.w3c.dom.Text;
 
 public class MarkerDetailsActivity extends AppCompatActivity {
