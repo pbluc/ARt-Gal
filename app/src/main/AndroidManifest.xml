@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.fbu.pbluc.artgal">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Both "AR Optional" and "AR Required" apps require CAMERA permission. -->
+    <uses-permission android:name="android.permission.CAMERA" /> <!-- Sceneform requires OpenGL ES 3.0 or later. -->
+    <uses-feature
+        android:glEsVersion="0x00030000"
+        android:required="true" />
+    <!--
+ Limits app visibility in the Google Play Store to ARCore supported devices
+         (https://developers.google.com/ar/devices).
+    -->
+    <uses-feature android:name="android.hardware.camera.ar" android:required="true"/>
 
     <application
         android:allowBackup="true"
@@ -10,7 +21,8 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.ARtGal"
         android:usesCleartextTraffic="true">
-        <activity android:name=".MarkerDetailsActivity"></activity>
+        <activity android:name=".ArViewActivity"></activity>
+        <activity android:name=".MarkerDetailsActivity" />
         <activity android:name=".UploadedMarkersActivity" />
         <activity android:name=".AddMarkerActivity" />
         <activity android:name=".CreateAccountActivity" />
@@ -22,6 +34,13 @@
             </intent-filter>
         </activity>
         <activity android:name=".LoginActivity" />
+        <!--
+ "AR Required" app, requires "Google Play Services for AR" (ARCore)
+         to be installed, as the app does not include any non-AR features.
+        -->
+        <meta-data
+            android:name="com.google.ar.core"
+            android:value="required" />
     </application>
 
 </manifest>
