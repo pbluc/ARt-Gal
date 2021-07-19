@@ -37,6 +37,10 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private FirebaseStorage firebaseStorage;
   private FirebaseFirestore firebaseFirestore;
   private FirebaseUser currentUser;
+  private StorageReference storageReference;
+  private StorageReference markerImgReference;
+  private StorageReference augmentedObjReference;
+
 
   private DocumentReference markerRef;
 
@@ -60,6 +64,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     firebaseStorage = FirebaseStorage.getInstance();
     firebaseFirestore = FirebaseFirestore.getInstance();
     currentUser = firebaseAuth.getCurrentUser();
+    storageReference = firebaseStorage.getReference();
 
     tvTitle = findViewById(R.id.tvTitle);
     tvDescription = findViewById(R.id.tvDescription);
@@ -105,11 +110,10 @@ public class MarkerDetailsActivity extends AppCompatActivity {
                   }
                 });
 
-            StorageReference storageReference = firebaseStorage.getReference();
-            StorageReference markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
+            markerImgReference= storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
 
             // Check if the augmented object file exists in Firebase Storage
-            StorageReference augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
+            augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
             augmentedObjReference
                 .getDownloadUrl()
                 .addOnSuccessListener(new OnSuccessListener<Uri>() {
@@ -157,20 +161,15 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   }
 
   private void deleteMarkerFilesFromStorage() {
-    // Create a storage reference from our app
-    StorageReference storageReference = firebaseStorage.getReference();
-    // Create a reference to the file to delete
-    StorageReference referenceImg = storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
-    // Delete the file
-    referenceImg
+   // Delete the file
+    markerImgReference
         .delete()
         .addOnSuccessListener(new OnSuccessListener<Void>() {
           @Override
           public void onSuccess(Void unused) {
             // File deleted successfully
             Log.i(TAG, "Reference image file was successfully deleted");
-            StorageReference augmentedObj = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
-            augmentedObj
+            augmentedObjReference
                 .delete()
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                   @Override

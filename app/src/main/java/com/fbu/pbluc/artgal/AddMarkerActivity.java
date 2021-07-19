@@ -232,18 +232,18 @@ public class AddMarkerActivity extends AppCompatActivity {
                     Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
 
                     String checkFlag = getIntent().getStringExtra("flag");
+                    Intent intent;
                     if (checkFlag.equals("UploadedMarkers")) {
                       // Came from UploadedMarkersActivity
-                      Intent intent = new Intent();
+                      intent = new Intent();
                       Log.i(TAG, "marker id to uploaded markers: " + markerId);
                       intent.putExtra("newMarkerUid", markerId);
                       setResult(RESULT_OK, intent);
-                      finish();
                     } else {
-                      Intent intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
+                      intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
                       startActivity(intent);
-                      finish();
                     }
+                    finish();
                   }
                 })
                 .addOnFailureListener(new OnFailureListener() {

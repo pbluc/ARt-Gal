@@ -200,58 +200,54 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-    if (resultCode == RESULT_OK) {
+    if (resultCode == RESULT_OK && data != null) {
       switch (requestCode) {
         case NEW_MARKER_REQUEST_CODE:
-          if (data != null) {
-            // Get data from the intent (marker)
-            String newMarkerUid = data.getStringExtra("newMarkerUid");
-            Log.i(TAG, "newMarkerUid: " + newMarkerUid);
-            markersRef
-                .document(newMarkerUid)
-                .get()
-                .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                  @Override
-                  public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                    if (task.isSuccessful()) {
-                      DocumentSnapshot documentSnapshot = task.getResult();
-                      if (documentSnapshot.exists()) {
-                        Marker newMarker = documentSnapshot.toObject(Marker.class);
+          // Get data from the intent (marker)
+          String newMarkerUid = data.getStringExtra("newMarkerUid");
+          Log.i(TAG, "newMarkerUid: " + newMarkerUid);
+          markersRef
+              .document(newMarkerUid)
+              .get()
+              .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
+                @Override
+                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
+                  if (task.isSuccessful()) {
+                    DocumentSnapshot documentSnapshot = task.getResult();
+                    if (documentSnapshot.exists()) {
+                      Marker newMarker = documentSnapshot.toObject(Marker.class);
 
-                        // Update the recycler view with the marker
-                        // Modify data source of tweets
-                        markers.add(0, newMarker);
-                        // Update the adapter
-                        adapter.notifyItemInserted(0);
-                        rvMarkers.smoothScrollToPosition(0);
-                        Log.i(TAG, "Markers: " + markers.toString());
-                      } else {
-                        Log.e(TAG, "No such document");
-                      }
+                      // Update the recycler view with the marker
+                      // Modify data source of tweets
+                      markers.add(0, newMarker);
+                      // Update the adapter
+                      adapter.notifyItemInserted(0);
+                      rvMarkers.smoothScrollToPosition(0);
+                      Log.i(TAG, "Markers: " + markers.toString());
                     } else {
-                      Log.e(TAG, "get new marker document failed with ", task.getException());
+                      Log.e(TAG, "No such document");
                     }
+                  } else {
+                    Log.e(TAG, "get new marker document failed with ", task.getException());
                   }
-                });
-          }
+                }
+              });
           break;
         case DELETE_MARKER_CODE:
-          if (data != null) {
-            String deletedMarkerUid = data.getStringExtra("deletedMarkerUid");
-            Log.i(TAG, "deletedMarkerUid: " + deletedMarkerUid);
+          String deletedMarkerUid = data.getStringExtra("deletedMarkerUid");
+          Log.i(TAG, "deletedMarkerUid: " + deletedMarkerUid);
 
-            int index = 0;
-            for (Marker m : markers) {
-              if (m.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49).equals(deletedMarkerUid)) {
-                markers.remove(m);
-                adapter.notifyItemRemoved(index);
-                Log.i(TAG, "removed marker at index: " + index);
-              }
-              index += 1;
+          int index = 0;
+          for (Marker m : markers) {
+            if (m.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49).equals(deletedMarkerUid)) {
+              markers.remove(m);
+              adapter.notifyItemRemoved(index);
+              Log.i(TAG, "removed marker at index: " + index);
             }
-
-            Log.i(TAG, "Markers: " + markers.toString());
+            index += 1;
           }
+
+          Log.i(TAG, "Markers: " + markers.toString());
           break;
         default:
           break;
