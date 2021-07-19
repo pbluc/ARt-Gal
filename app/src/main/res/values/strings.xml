@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">ARt Gal</string>
+    <string name="title">Title</string>
+    <string name="description">Description</string>
+    <string name="get_reference_image">Get Reference Image</string>
+    <string name="get_augmented_obj">Get Augmented Object</string>
+    <string name="create_account">Create Account</string>
+    <string name="email">Email</string>
+    <string name="first_name">First Name</string>
+    <string name="last_name">Last Name</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="login">Log In</string>
+    <string name="logout">Log Out</string>
+    <string name="upload_marker">Upload Marker</string>
+    <string name="view_markers">View Markers</string>
 </resources>

@@ -17,6 +17,7 @@ import android.widget.LinearLayout;
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
+import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
@@ -35,6 +36,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
 
   private static final String TAG = "UploadedMarkersActivity";
+
   private static final int NEW_MARKER_REQUEST_CODE = 20;
   private static final int DELETE_MARKER_CODE = 30;
   public final int QUERY_LIMIT = 8;
@@ -64,9 +66,9 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     // Create a reference to the uploadedMarkers subcollection
     markersRef = firebaseFirestore
-        .collection("users")
+        .collection(User.KEY_USERS)
         .document(currentUser.getUid())
-        .collection("uploadedMarkers");
+        .collection(Marker.KEY_UPLOADED_MARKERS);
 
     rvMarkers = findViewById(R.id.rvMarkers);
     ivAddMarker = findViewById(R.id.ivAddMarker);
@@ -109,9 +111,10 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     queryMarkers();
   }
 
-  private void fetchUploadedMarkersAsync() {
+  private void queryMarkers() {
+    // Create a query against the collection
     Task<QuerySnapshot> query = markersRef
-        .orderBy("createdAt", Query.Direction.DESCENDING)
+        .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
         .limit(QUERY_LIMIT)
         .get()
         .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -123,14 +126,12 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                 Marker resultMarker = document.toObject(Marker.class);
                 resultMarkers.add(resultMarker);
               }
-              adapter.clear();
-              adapter.addAll(resultMarkers);
-              scrollListener.resetState();
-              Log.i(TAG, "markers after refresh: " + markers.toString());
+              markers.addAll(resultMarkers);
+              adapter.notifyDataSetChanged();
+              Log.i(TAG, "markers after query: " + markers.toString());
             } else {
               Log.e(TAG, "Error getting marker documents", task.getException());
             }
-            swipeContainer.setRefreshing(false);
           }
         });
   }
@@ -138,8 +139,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   private void loadNextDataFromDatabase() {
     // Send the request
     Task<QuerySnapshot> query = markersRef
-        .orderBy("createdAt", Query.Direction.DESCENDING)
-        .whereLessThan("createdAt", markers.get(markers.size() - 1).getCreatedAt())
+        .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
+        .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 1).getCreatedAt())
         .limit(QUERY_LIMIT)
         .get()
         .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
@@ -161,6 +162,32 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
             } else {
               Log.e(TAG, "Error getting marker documents", task.getException());
             }
+          }
+        });
+  }
+
+  private void fetchUploadedMarkersAsync() {
+    Task<QuerySnapshot> query = markersRef
+        .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
+        .limit(QUERY_LIMIT)
+        .get()
+        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
+          @Override
+          public void onComplete(@NonNull Task<QuerySnapshot> task) {
+            if (task.isSuccessful()) {
+              List<Marker> resultMarkers = new ArrayList<>();
+              for (QueryDocumentSnapshot document : task.getResult()) {
+                Marker resultMarker = document.toObject(Marker.class);
+                resultMarkers.add(resultMarker);
+              }
+              adapter.clear();
+              adapter.addAll(resultMarkers);
+              scrollListener.resetState();
+              Log.i(TAG, "markers after refresh: " + markers.toString());
+            } else {
+              Log.e(TAG, "Error getting marker documents", task.getException());
+            }
+            swipeContainer.setRefreshing(false);
           }
         });
   }
@@ -215,7 +242,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
             int index = 0;
             for (Marker m : markers) {
-              if (m.getMarkerImg().get("fileName").toString().substring(29, 49).equals(deletedMarkerUid)) {
+              if (m.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49).equals(deletedMarkerUid)) {
                 markers.remove(m);
                 adapter.notifyItemRemoved(index);
                 Log.i(TAG, "removed marker at index: " + index);
@@ -233,38 +260,15 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     super.onActivityResult(requestCode, resultCode, data);
   }
 
-  private void queryMarkers() {
-    // Create a query against the collection
-    Task<QuerySnapshot> query = markersRef
-        .orderBy("createdAt", Query.Direction.DESCENDING)
-        .limit(QUERY_LIMIT)
-        .get()
-        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-          @Override
-          public void onComplete(@NonNull Task<QuerySnapshot> task) {
-            if (task.isSuccessful()) {
-              List<Marker> resultMarkers = new ArrayList<>();
-              for (QueryDocumentSnapshot document : task.getResult()) {
-                Marker resultMarker = document.toObject(Marker.class);
-                resultMarkers.add(resultMarker);
-              }
-              markers.addAll(resultMarkers);
-              adapter.notifyDataSetChanged();
-              Log.i(TAG, "markers after query: " + markers.toString());
-            } else {
-              Log.e(TAG, "Error getting marker documents", task.getException());
-            }
-          }
-        });
-  }
-
   @Override
   public void onListItemClick(int position) {
     // Start intent to go to marker details activity
     Marker clickedMarker = markers.get(position);
+
     Intent intent = new Intent(UploadedMarkersActivity.this, MarkerDetailsActivity.class);
     intent.putExtra("userMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(0, 28));
     intent.putExtra("clickedMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(29, 49));
+
     startActivityForResult(intent, DELETE_MARKER_CODE);
   }
 }

@@ -19,6 +19,7 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.models.Marker;
+import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
@@ -106,13 +107,15 @@ public class AddMarkerActivity extends AppCompatActivity {
   private void addMarkerDocument() {
     String title = etTitle.getText().toString().trim();
     String description = etDescription.getText().toString().trim();
-    DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(currentUser.getUid());
+    DocumentReference currentUserDoc = firebaseFirestore.collection(User.KEY_USERS).document(currentUser.getUid());
+
     Map<String, Object> markerImg = new HashMap<>();
-    markerImg.put("uri", referenceImgUri.toString());
-    markerImg.put("fileName", currentUser.getUid() + getFileName(referenceImgUri));
+    markerImg.put(Marker.KEY_URI, referenceImgUri.toString());
+    markerImg.put(Marker.KEY_FILENAME, currentUser.getUid() + getFileName(referenceImgUri));
+
     Map<String, Object> augmentedObj = new HashMap<>();
-    augmentedObj.put("uri", augmentedObjUri.toString());
-    augmentedObj.put("fileName", currentUser.getUid() + getFileName(augmentedObjUri));
+    augmentedObj.put(Marker.KEY_URI, augmentedObjUri.toString());
+    augmentedObj.put(Marker.KEY_FILENAME, currentUser.getUid() + getFileName(augmentedObjUri));
 
     if (!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) {
       Marker marker = new Marker();
@@ -125,7 +128,7 @@ public class AddMarkerActivity extends AppCompatActivity {
       marker.setAugmentedObj(augmentedObj);
 
       currentUserDoc.
-          collection("uploadedMarkers")
+          collection(Marker.KEY_UPLOADED_MARKERS)
           .add(marker)
           .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
             @Override
@@ -149,10 +152,10 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   }
 
-  private void uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String id, DocumentReference userDoc, Marker m) {
+  private void uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String markerId, DocumentReference currentUserDoc, Marker marker) {
     // Create child references
-    referenceImagesReference = storageReference.child("referenceImages/" + currentUser.getUid() + "_" + id + getFileName(referenceImgUri));
-    augmentedObjReference = storageReference.child("augmentedObjects/" + currentUser.getUid() + "_" + id + getFileName(augmentedObjUri));
+    referenceImagesReference = storageReference.child("referenceImages/" + currentUser.getUid() + "_" + markerId + getFileName(referenceImgUri));
+    augmentedObjReference = storageReference.child("augmentedObjects/" + currentUser.getUid() + "_" + markerId + getFileName(augmentedObjUri));
 
     referenceImagesReference
         .putFile(referenceUri)
@@ -162,7 +165,7 @@ public class AddMarkerActivity extends AppCompatActivity {
             // Handle unsuccessful uploads
             Log.e(TAG, "Unable to upload reference image to storage", e);
             // Files were not added to storage and must delete created marker document
-            deleteCreatedMarkerDocument(userDoc, id);
+            deleteCreatedMarkerDocument(currentUserDoc, markerId);
           }
         })
         .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -174,7 +177,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                   @Override
                   public void onFailure(@NonNull Exception e) {
                     Log.e(TAG, "Unable to upload augmented object to storage", e);
-                    deleteCreatedMarkerDocument(userDoc, id);
+                    deleteCreatedMarkerDocument(currentUserDoc, markerId);
                   }
                 })
                 .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
@@ -184,7 +187,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                     // Files were added to storage and update field updatedAt for user doc
                     //  and rename file names of marker and augmented object in marker document
                     //  as well as its updatedAt field.
-                    updateCreatedMarkerDocument(userDoc, id, m);
+                    updateCreatedMarkerDocument(currentUserDoc, markerId, marker);
                   }
                 });
           }
@@ -196,32 +199,34 @@ public class AddMarkerActivity extends AppCompatActivity {
     tvSelectedAugmentedObject.setText("Only .fbx, .obj, .gltf, .glb assets");
   }
 
-  private void updateCreatedMarkerDocument(DocumentReference userDoc, String id, Marker m) {
+  private void updateCreatedMarkerDocument(DocumentReference currentUserDoc, String markerId, Marker marker) {
     Object newUpdateDateTime = FieldValue.serverTimestamp();
-    userDoc
-        .update("updatedAt", newUpdateDateTime)
+    currentUserDoc
+        .update(Marker.KEY_UPDATED_AT, newUpdateDateTime)
         .addOnSuccessListener(new OnSuccessListener<Void>() {
           @Override
           public void onSuccess(Void unused) {
-            String updatedReferenceImgFileName = currentUser.getUid() + "_" + id + getFileName(referenceImgUri);
-            String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + id + getFileName(augmentedObjUri);
-            userDoc
-                .collection("uploadedMarkers")
-                .document(id)
+            String updatedReferenceImgFileName = currentUser.getUid() + "_" + markerId + getFileName(referenceImgUri);
+            String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + markerId + getFileName(augmentedObjUri);
+            currentUserDoc
+                .collection(Marker.KEY_UPLOADED_MARKERS)
+                .document(markerId)
                 .update(
-                    "augmentedObj.fileName", updatedAugmentedObjectFileName,
-                    "markerImg.fileName", updatedReferenceImgFileName,
-                    "updatedAt", newUpdateDateTime
+                    Marker.KEY_AUGMENTED_OBJ + "." + Marker.KEY_FILENAME, updatedAugmentedObjectFileName,
+                    Marker.KEY_MARKER_IMG + "." + Marker.KEY_FILENAME, updatedReferenceImgFileName,
+                    Marker.KEY_UPDATED_AT, newUpdateDateTime
                 )
                 .addOnSuccessListener(new OnSuccessListener<Void>() {
                   @Override
                   public void onSuccess(Void unused) {
-                    Map<String, Object> updatedMarkerImg = m.getMarkerImg();
-                    updatedMarkerImg.put("fileName", updatedReferenceImgFileName);
-                    m.setMarkerImg(updatedMarkerImg);
-                    Map<String, Object> updatedAugmentedObj = m.getAugmentedObj();
-                    updatedAugmentedObj.put("fileName", updatedAugmentedObjectFileName);
-                    m.setAugmentedObj(updatedAugmentedObj);
+                    Map<String, Object> updatedMarkerImg = marker.getMarkerImg();
+                    updatedMarkerImg.put(Marker.KEY_FILENAME, updatedReferenceImgFileName);
+                    marker.setMarkerImg(updatedMarkerImg);
+
+                    Map<String, Object> updatedAugmentedObj = marker.getAugmentedObj();
+                    updatedAugmentedObj.put(Marker.KEY_FILENAME, updatedAugmentedObjectFileName);
+                    marker.setAugmentedObj(updatedAugmentedObj);
+
                     Log.i(TAG, "Successfully updated both user and marker documents!");
 
                     Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
@@ -230,8 +235,8 @@ public class AddMarkerActivity extends AppCompatActivity {
                     if (checkFlag.equals("UploadedMarkers")) {
                       // Came from UploadedMarkersActivity
                       Intent intent = new Intent();
-                      Log.i(TAG, "marker id to uploaded markers: " + id);
-                      intent.putExtra("newMarkerUid", id);
+                      Log.i(TAG, "marker id to uploaded markers: " + markerId);
+                      intent.putExtra("newMarkerUid", markerId);
                       setResult(RESULT_OK, intent);
                       finish();
                     } else {
@@ -257,8 +262,8 @@ public class AddMarkerActivity extends AppCompatActivity {
         });
   }
 
-  private void deleteCreatedMarkerDocument(DocumentReference userDoc, String id) {
-    userDoc.collection("uploadedMarkers").document(id)
+  private void deleteCreatedMarkerDocument(DocumentReference currentUserDoc, String markerId) {
+    currentUserDoc.collection(Marker.KEY_UPLOADED_MARKERS).document(markerId)
         .delete()
         .addOnSuccessListener(new OnSuccessListener<Void>() {
           @Override
@@ -287,8 +292,10 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   private void openFileChooser(View v) {
     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
     intent.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
     switch (v.getId()) {
       case R.id.btnFindReferenceImg:
         String[] referenceImgMimeTypes = {"image/jpeg", "image/png"};

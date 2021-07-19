@@ -25,20 +25,20 @@
             android:id="@+id/btnLogout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Log Out"
+            android:text="@string/logout"
             android:layout_marginTop="10dp"/>
 
         <Button
             android:id="@+id/btnUploadMarker"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Upload Marker"/>
+            android:text="@string/upload_marker"/>
 
         <Button
             android:id="@+id/btnViewMarkers"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="View Markers"/>
+            android:text="@string/view_markers"/>
     </LinearLayout>
 
 </RelativeLayout>

@@ -53,12 +53,12 @@ public class LoginActivity extends AppCompatActivity {
               public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                   // Log in success, update UI with the signed-in user's information
-                  Log.i(TAG, "signInWithEmail:success");
+                  // Log.i(TAG, "signInWithEmail:success");
                   Toast.makeText(LoginActivity.this, "Successfully logged in!", Toast.LENGTH_SHORT).show();
                   goMainActivity();
                 } else {
                   // If sign in fails, display a message to the user.
-                  Log.i(TAG, "signInWthEmail:failure", task.getException());
+                  // Log.i(TAG, "signInWthEmail:failure", task.getException());
                   Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                 }
                 etEmail.setText("");

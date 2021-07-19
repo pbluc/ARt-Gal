@@ -75,69 +75,73 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
 
     markerRef = firebaseFirestore
-        .collection("users")
+        .collection(User.KEY_USERS)
         .document(userUid)
-        .collection("uploadedMarkers")
+        .collection(Marker.KEY_UPLOADED_MARKERS)
         .document(markerUid);
 
-    markerRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-      @Override
-      public void onSuccess(DocumentSnapshot documentSnapshot) {
-        marker = documentSnapshot.toObject(Marker.class);
-
-        DocumentReference markerUser = marker.getUser();
-
-        tvTitle.setText(marker.getTitle());
-        tvDescription.setText(marker.getDescription());
-        tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
-        tvCreatedAt.setText(marker.formattedCreatedAt());
-
-        markerUser.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+    markerRef
+        .get()
+        .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
           @Override
           public void onSuccess(DocumentSnapshot documentSnapshot) {
-            User user = documentSnapshot.toObject(User.class);
-            tvUserFullName.setText(user.getName().get("fName").toString() + " " + user.getName().get("lName").toString());
-            tvUsername.setText(user.getUsername());
+            marker = documentSnapshot.toObject(Marker.class);
+
+            DocumentReference markerUser = marker.getUser();
+
+            tvTitle.setText(marker.getTitle());
+            tvDescription.setText(marker.getDescription());
+            tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
+            tvCreatedAt.setText(marker.formattedCreatedAt());
+
+            markerUser
+                .get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                  @Override
+                  public void onSuccess(DocumentSnapshot documentSnapshot) {
+                    User user = documentSnapshot.toObject(User.class);
+                    tvUserFullName.setText(user.getName().get(User.KEY_FIRST_NAME).toString() + " " + user.getName().get(User.KEY_LAST_NAME).toString());
+                    tvUsername.setText(user.getUsername());
+                  }
+                });
+
+            StorageReference storageReference = firebaseStorage.getReference();
+            StorageReference markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
+
+            // Check if the augmented object file exists in Firebase Storage
+            StorageReference augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
+            augmentedObjReference
+                .getDownloadUrl()
+                .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                  @Override
+                  public void onSuccess(Uri uri) {
+                    Log.i(TAG, "Augmented object file found!");
+                  }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                  @Override
+                  public void onFailure(@NonNull Exception e) {
+                    // File not found
+                    Log.e(TAG, "Augmented object file not found", e);
+                  }
+                });
+
+            markerImgReference
+                .getDownloadUrl()
+                .addOnSuccessListener(new OnSuccessListener<Uri>() {
+                  @Override
+                  public void onSuccess(Uri uri) {
+                    Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
+                  }
+                })
+                .addOnFailureListener(new OnFailureListener() {
+                  @Override
+                  public void onFailure(@NonNull Exception e) {
+                    Log.e(TAG, "Could not get download url of marker img", e);
+                  }
+                });
           }
         });
-
-        StorageReference storageReference = firebaseStorage.getReference();
-        StorageReference markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get("fileName").toString());
-
-        // Check if the augmented object file exists in Firebase Storage
-        StorageReference augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get("fileName").toString());
-        augmentedObjReference
-            .getDownloadUrl()
-            .addOnSuccessListener(new OnSuccessListener<Uri>() {
-              @Override
-              public void onSuccess(Uri uri) {
-                Log.i(TAG, "Augmented object file found!");
-              }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-              @Override
-              public void onFailure(@NonNull Exception e) {
-                // File not found
-                Log.e(TAG, "Augmented object file not found", e);
-              }
-            });
-
-        markerImgReference
-            .getDownloadUrl()
-            .addOnSuccessListener(new OnSuccessListener<Uri>() {
-              @Override
-              public void onSuccess(Uri uri) {
-                Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
-              }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-              @Override
-              public void onFailure(@NonNull Exception e) {
-                Log.e(TAG, "Could not get download url of marker img", e);
-              }
-            });
-      }
-    });
 
     if (userUid.equals(currentUser.getUid())) {
       deleteMarkerLayoutContainer.setVisibility(View.VISIBLE);
@@ -156,7 +160,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     // Create a storage reference from our app
     StorageReference storageReference = firebaseStorage.getReference();
     // Create a reference to the file to delete
-    StorageReference referenceImg = storageReference.child("referenceImages/" + marker.getMarkerImg().get("fileName").toString());
+    StorageReference referenceImg = storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
     // Delete the file
     referenceImg
         .delete()
@@ -165,7 +169,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
           public void onSuccess(Void unused) {
             // File deleted successfully
             Log.i(TAG, "Reference image file was successfully deleted");
-            StorageReference augmentedObj = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get("fileName").toString());
+            StorageReference augmentedObj = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
             augmentedObj
                 .delete()
                 .addOnSuccessListener(new OnSuccessListener<Void>() {

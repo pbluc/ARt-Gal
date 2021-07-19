@@ -19,6 +19,17 @@ import java.util.Map;
 
 public class Marker {
 
+  public static final String KEY_UPLOADED_MARKERS = "uploadedMarkers";
+  public static final String KEY_TITLE = "email";
+  public static final String KEY_DESCRIPTION = "description";
+  public static final String KEY_USER = "user";
+  public static final String KEY_MARKER_IMG = "markerImg";
+  public static final String KEY_AUGMENTED_OBJ = "augmentedObj";
+  public static final String KEY_FILENAME = "fileName";
+  public static final String KEY_URI = "uri";
+  public static final String KEY_CREATED_AT = "createdAt";
+  public static final String KEY_UPDATED_AT = "updatedAt";
+
   private String title;
   private String description;
   private DocumentReference user;

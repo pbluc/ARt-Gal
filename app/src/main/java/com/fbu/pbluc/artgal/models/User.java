@@ -3,6 +3,16 @@ package com.fbu.pbluc.artgal.models;
 import java.util.Map;
 
 public class User {
+  public static final String KEY_USERS = "users";
+  public static final String KEY_EMAIL = "email";
+  public static final String KEY_FULL_NAME = "name";
+  public static final String KEY_FIRST_NAME = "fName";
+  public static final String KEY_LAST_NAME = "lName";
+  public static final String KEY_USERNAME = "username";
+  public static final String KEY_PASSWORD = "password";
+  public static final String KEY_CREATED_AT = "createdAt";
+  public static final String KEY_UPDATED_AT = "updatedAt";
+
   private String email;
   private Map<String, Object> name;
   private String username;

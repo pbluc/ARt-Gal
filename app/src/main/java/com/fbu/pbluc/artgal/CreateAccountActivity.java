@@ -79,15 +79,15 @@ public class CreateAccountActivity extends AppCompatActivity {
               public void onComplete(@NonNull Task<AuthResult> task) {
                 if (task.isSuccessful()) {
                   // Sign up success, update UI with the signed in user's information
-                  Log.i(TAG, "createdUserWithEmail:success");
+                  // Log.i(TAG, "createdUserWithEmail:success");
                   Toast.makeText(CreateAccountActivity.this, "Successfully created account!", Toast.LENGTH_SHORT).show();
 
                   FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
 
                   // Create user document
                   Map<String, Object> name = new HashMap<>();
-                  name.put("fName", fName);
-                  name.put("lName", lName);
+                  name.put(User.KEY_FIRST_NAME, fName);
+                  name.put(User.KEY_LAST_NAME, lName);
 
                   User user = new User();
                   user.setEmail(email);
@@ -97,13 +97,13 @@ public class CreateAccountActivity extends AppCompatActivity {
                   user.setCreatedAt(FieldValue.serverTimestamp());
                   user.setUpdatedAt(FieldValue.serverTimestamp());
 
-                  DocumentReference currentUserDoc = firebaseFirestore.collection("users").document(firebaseUser.getUid());
+                  DocumentReference currentUserDoc = firebaseFirestore.collection(User.KEY_USERS).document(firebaseUser.getUid());
                   currentUserDoc.set(user);
 
                   goMainActivity();
                 } else {
                   // If sign up fails, display a message to the user
-                  Log.e(TAG, "createdUserWithEmail:failure", task.getException());
+                  // Log.e(TAG, "createdUserWithEmail:failure", task.getException());
                   Toast.makeText(CreateAccountActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
                 }
                 etEmail.setText("");

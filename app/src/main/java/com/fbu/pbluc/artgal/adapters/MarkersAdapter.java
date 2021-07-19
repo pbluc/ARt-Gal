@@ -86,7 +86,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     public void bind(Marker marker) {
       tvTitle.setText(marker.getTitle());
       tvDescription.setText(marker.getDescription());
-      tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get("fileName").toString().substring(49));
+      tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
       tvCreatedAt.setText("Created " + marker.calculateTimeAgo());
     }
 

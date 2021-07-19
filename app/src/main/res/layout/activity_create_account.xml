@@ -12,7 +12,7 @@
         android:id="@+id/tvCreateAccount"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Create Account"
+        android:text="@string/create_account"
         android:textSize="30sp"
         android:layout_centerHorizontal="true"/>
 
@@ -20,16 +20,16 @@
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Email"
-        android:inputType="textEmailAddress"
         android:layout_below="@id/tvCreateAccount"
-        android:layout_marginTop="50dp"/>
+        android:layout_marginTop="50dp"
+        android:hint="@string/email"
+        android:inputType="textEmailAddress" />
 
     <EditText
         android:id="@+id/etFirstName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="First Name"
+        android:hint="@string/first_name"
         android:layout_marginTop="10dp"
         android:layout_below="@id/etEmail"/>
 
@@ -37,7 +37,7 @@
         android:id="@+id/etLastName"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Last Name"
+        android:hint="@string/last_name"
         android:layout_marginTop="10dp"
         android:layout_below="@id/etFirstName"/>
 
@@ -45,7 +45,7 @@
         android:id="@+id/etUsername"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Username"
+        android:hint="@string/username"
         android:layout_marginTop="40dp"
         android:layout_below="@id/etLastName"/>
 
@@ -53,7 +53,7 @@
         android:id="@+id/etPassword"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Password"
+        android:hint="@string/password"
         android:inputType="textPassword"
         android:layout_marginTop="10dp"
         android:layout_below="@id/etUsername"/>
@@ -63,7 +63,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/etPassword"
-        android:text="Log In"
+        android:text="@string/login"
         android:layout_marginTop="10dp"/>
 
     <Button
@@ -71,7 +71,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/btnLogin"
-        android:text="Create Account"
+        android:text="@string/create_account"
         android:layout_marginTop="10dp"/>
 
 </RelativeLayout>
