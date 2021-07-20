@@ -2,12 +2,17 @@ package com.fbu.pbluc.artgal;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -15,6 +20,7 @@ import android.view.MotionEvent;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.fbu.pbluc.artgal.models.Marker;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
@@ -28,12 +34,15 @@ import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.Config;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.ArSceneView;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.assets.RenderableSource;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.ar.sceneform.rendering.Renderable;
 import com.google.ar.sceneform.ux.BaseArFragment;
+import com.google.common.io.Files;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.storage.FileDownloadTask;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.ListResult;
@@ -44,21 +53,19 @@ import java.io.FileDescriptor;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Collections;
 
 
 public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateListener {
 
   private static final String TAG = "ArViewActivity";
 
-  private FirebaseStorage firebaseStorage;
-  private StorageReference storageReference;
-  private StorageReference referenceImagesRef;
-  private StorageReference augmentedObjRef;
-
   private CustomArFragment arFragment;
 
-  private File augmentedObjFile;
+  private FirebaseStorage firebaseStorage;
+  private StorageReference storageReference;
 
+  private ModelRenderable renderable;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -70,147 +77,105 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
     firebaseStorage = FirebaseStorage.getInstance();
     storageReference = firebaseStorage.getReference();
-    referenceImagesRef = storageReference.child("referenceImages/");
-    augmentedObjRef = storageReference.child("augmentedObjects/");
 
   }
 
   public void setUpDatabase(Config config, Session session) {
+    Bitmap heartsCradleBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.hearts_cradle);
     AugmentedImageDatabase augmentedImageDatabase = new AugmentedImageDatabase(session);
-    // Create bitmaps for all markers in Firebase Storage database
-    referenceImagesRef
-        .listAll()
-        .addOnSuccessListener(new OnSuccessListener<ListResult>() {
-          @Override
-          public void onSuccess(ListResult listResult) {
-            for(StorageReference fileRef : listResult.getItems()) {
-              // Download the file using its reference (fileRef)
-              String markerFileName = fileRef.getName();
-              fileRef
-                  .getDownloadUrl()
-                  .addOnSuccessListener(new OnSuccessListener<Uri>() {
-                    @Override
-                    public void onSuccess(Uri markerImgUri) {
-                      Bitmap markerImgBitmap = null;
-                      try {
-                        ParcelFileDescriptor parcelFileDescriptor =
-                            getContentResolver().openFileDescriptor(markerImgUri, "r");
-                        FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
-                        markerImgBitmap = BitmapFactory.decodeFileDescriptor(fileDescriptor);
-
-                        if(markerImgBitmap == null) {
-                          Log.i(TAG, "markerImgBitmap is null");
-                        } else {
-                          Log.i(TAG, "markerImgBitmap is NOT null");
-                          augmentedImageDatabase.addImage(markerFileName, markerImgBitmap);
-                        }
-
-                        parcelFileDescriptor.close();
-                      } catch (IOException e) {
-                        e.printStackTrace();
-                      }
-                    }
-                  })
-                  .addOnFailureListener(new OnFailureListener() {
-                    @Override
-                    public void onFailure(@NonNull Exception e) {
-                      Log.e(TAG, "File not found", e);
-                    }
-                  });
-            }
-          }
-        })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            // Handle any errors
-            Log.e(TAG, "Could not retrieve all reference image files", e);
-          }
-        });
-    // Add that augmented image database to our AR session
+    augmentedImageDatabase.addImage("heart's cradle", heartsCradleBitmap);
     config.setAugmentedImageDatabase(augmentedImageDatabase);
   }
 
+
   @Override
   public void onUpdate(FrameTime frameTime) {
-    // Every time there is something new to our scene we will create a frame
+
     Frame frame = arFragment.getArSceneView().getArFrame();
-    // From this frame we will collect all the augmented images that are being tracked
     Collection<AugmentedImage> images = frame.getUpdatedTrackables(AugmentedImage.class);
-    Log.i(TAG, "images collection size: " + images.size());
 
-    // Go through each image in a for each loop and check if our current marker image is being tracked
-    // And if that marker image is being tracked then we will create an anchor and place the 3D model
-    for (AugmentedImage image:images) {
+    for (AugmentedImage image : images) {
       if (image.getTrackingState() == TrackingState.TRACKING) {
-        Anchor anchor = image.createAnchor(image.getCenterPose());
+        if (image.getName().equals("heart's cradle")) {
+          //Log.i(TAG, "Detected image");
+          Anchor anchor = image.createAnchor(image.getCenterPose());
 
-        // TODO: Find corresponding augmented object file in Firebase Storage
-        // Find and retrieve 3D model from Firebase Storage
-        augmentedObjRef
-            .listAll()
-            .addOnSuccessListener(new OnSuccessListener<ListResult>() {
-              @Override
-              public void onSuccess(ListResult listResult) {
-                Log.i(TAG, "image name: " + image.getName());
-                for(StorageReference fileRef : listResult.getItems()) {
-                  String augmentedObjFileName = fileRef.getName();
-                  Log.i(TAG, "augmentedObjFileName: " + augmentedObjFileName);
-                  if(augmentedObjFileName.substring(0, 49).equals(image.getName().substring(0,49))) {
-                    try {
-                      // TODO: Remove suffix in the fileName string and determine correct suffix between gltf or glb
-                      augmentedObjFile = File.createTempFile(augmentedObjFileName, "gltf");
-
-                      augmentedObjRef
-                          .getFile(augmentedObjFile)
-                          .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
-                            @Override
-                            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
-                              // Now that we have the anchor we can create our 3D model and place it on top of the anchor
-                              createModel(anchor, augmentedObjFile);
-                            }
-                          })
-                          .addOnFailureListener(new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                              Log.e(TAG, "Augmented object file not found", e);
-                            }
-                          });
-                    } catch (IOException e) {
-                      e.printStackTrace();
-                    }
-                  }
-                }
-              }
-            })
-            .addOnFailureListener(new OnFailureListener() {
-              @Override
-              public void onFailure(@NonNull Exception e) {
-                Log.e(TAG, "Could not retrieve all augmented object files", e);
-              }
-            });
+          createModel(anchor);
+        }
       }
+    }
+
+  }
+
+  private void createModel(Anchor anchor) {
+    StorageReference augmentedObjRef = storageReference.child("augmentedObjects/scene.glb");
+
+    try {
+      File augmentedObjFile = File.createTempFile("scene", "glb");
+
+      augmentedObjRef
+          .getFile(augmentedObjFile)
+          .addOnSuccessListener(new OnSuccessListener<FileDownloadTask.TaskSnapshot>() {
+            @Override
+            public void onSuccess(FileDownloadTask.TaskSnapshot taskSnapshot) {
+              Log.i(TAG, "onSuccess: Retrieved augmented object file");
+
+              buildModel(augmentedObjFile, anchor);
+            }
+          })
+          .addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception e) {
+              Log.e(TAG, "onFailure: Could not get augmented object file", e);
+            }
+          });
+    } catch (Exception e) {
+      e.printStackTrace();
     }
   }
 
-  private void createModel(Anchor anchor, File augmentedObjFile) {
+  private void buildModel(File augmentedObjFile, Anchor anchor) {
+    final String GLTF_ASSET =
+        "https://github.com/KhronosGroup/glTF-Sample-Models/raw/master/2.0/Duck/glTF/Duck.gltf";
 
-    // TODO: Check if augmented object file is of tyoe GLTF2 or GLB
+    /* When you build a Renderable, Sceneform loads model and related resources
+     * in the background while returning a CompletableFuture.
+     * Call thenAccept(), handle(), or check isDone() before calling get().
+     */
+
+    Log.i(TAG, "augmented object file path: " + augmentedObjFile.getPath());
     RenderableSource renderableSource = RenderableSource
         .builder()
-        .setSource(this, Uri.parse(augmentedObjFile.getPath()), RenderableSource.SourceType.GLTF2)
+        .setSource(ArViewActivity.this, Uri.parse(GLTF_ASSET), RenderableSource.SourceType.GLTF2)
+        .setScale(0.1f)  // Scale the original model to 10%
         .setRecenterMode(RenderableSource.RecenterMode.ROOT)
         .build();
 
-    ModelRenderable.builder()
+
+    ModelRenderable
+        .builder()
         .setSource(this, renderableSource)
+        .setRegistryId(GLTF_ASSET)
         .build()
-        .thenAccept(modelRenderable -> placeModel(modelRenderable, anchor));
+        .thenAccept(modelRenderable -> {
+          Log.i(TAG, "onSuccess: Model built");
+          Toast.makeText(ArViewActivity.this, "Model built", Toast.LENGTH_SHORT).show();
+          placeModel(modelRenderable, anchor);
+        })
+        .exceptionally(
+            throwable -> {
+              Log.e(TAG, "onFailure: model not built" + throwable.getMessage());
+              throwable.printStackTrace();
+              return null;
+            });
   }
 
   private void placeModel(ModelRenderable modelRenderable, Anchor anchor) {
+    Log.i(TAG, "modelRenderable: " + modelRenderable.toString());
+
     AnchorNode anchorNode = new AnchorNode(anchor);
     anchorNode.setRenderable(modelRenderable);
     arFragment.getArSceneView().getScene().addChild(anchorNode);
   }
+
 }
