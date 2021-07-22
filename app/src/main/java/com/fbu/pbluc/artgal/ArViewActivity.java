@@ -10,6 +10,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
@@ -42,6 +43,7 @@ import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.assets.RenderableSource;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -68,9 +70,17 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
   private FirebaseStorage firebaseStorage;
   private StorageReference storageReference;
+  private StorageReference augmentedObjRef;
   private FirebaseFirestore firebaseFirestore;
 
+  private DocumentReference trackedMarkerDoc;
+
   private AugmentedImageDatabase augmentedImageDatabase;
+
+  private Marker trackedMarker;
+  private String trackedAugmentedObjUri;
+
+  private Anchor anchor;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -158,23 +168,43 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
     Frame frame = arFragment.getArSceneView().getArFrame();
     Collection<AugmentedImage> images = frame.getUpdatedTrackables(AugmentedImage.class);
-
     for (AugmentedImage image : images) {
       if (image.getTrackingState() == TrackingState.TRACKING) {
         Log.i(TAG, "Tracked image file name: " + image.getName());
-        if (image.getName().equals("heart's cradle")) {
-          //Log.i(TAG, "Detected image");
-          Anchor anchor = image.createAnchor(image.getCenterPose());
+        trackedMarkerDoc = firebaseFirestore
+            .collection("users")
+            .document(image.getName().substring(0, 28))
+            .collection("uploadedMarkers")
+            .document(image.getName().substring(29, 49));
 
-          createModel(anchor);
-        }
+        trackedMarkerDoc
+            .get()
+            .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+              @Override
+              public void onSuccess(DocumentSnapshot documentSnapshot) {
+                if(documentSnapshot.exists()) {
+                  trackedMarker = documentSnapshot.toObject(Marker.class);
+                  trackedAugmentedObjUri = trackedMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+
+                  anchor = image.createAnchor(image.getCenterPose());
+
+                  createModel(anchor, trackedAugmentedObjUri);
+                }
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "onFailure: getting tracked marker document failed", e);
+              }
+            });
       }
     }
 
   }
 
-  private void createModel(Anchor anchor) {
-    StorageReference augmentedObjRef = storageReference.child("augmentedObjects/jellyfish.glb");
+  private void createModel(Anchor anchor, String fileName) {
+    augmentedObjRef = storageReference.child("augmentedObjects/" + fileName);
 
       augmentedObjRef
           .getDownloadUrl()
@@ -207,7 +237,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     RenderableSource renderableSource = RenderableSource
         .builder()
         .setSource(ArViewActivity.this, augmentedObjUri, RenderableSource.SourceType.GLB)
-        .setScale(0.05f)  // Scale the original model to 50%
+        .setScale(0.25f)  // Scale the original model to 50%
         .setRecenterMode(RenderableSource.RecenterMode.ROOT)
         .build();
 
@@ -238,4 +268,20 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     arFragment.getArSceneView().getScene().addChild(anchorNode);
   }
 
+  @Override
+  protected void onPause() {
+    arFragment.getArSceneView().getSession().pause();
+    super.onPause();
+  }
+
+  @Override
+  protected void onDestroy() {
+    AsyncTask.execute(new Runnable() {
+      @Override
+      public void run() {
+        arFragment.getArSceneView().getSession().close();
+      }
+    });
+    super.onDestroy();
+  }
 }
