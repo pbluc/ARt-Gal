@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_marginLeft="16dp"
-    android:layout_marginRight="16dp"
+    android:layout_margin="16dp"
     tools:context=".MainActivity">
 
 
@@ -48,5 +47,19 @@
             android:text="@string/open_ar"
             android:visibility="gone"/>
     </LinearLayout>
+
+    <TextView
+        android:id="@+id/ArCoreUserPrivacyDisclosure"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:text="This application runs on Google Play Services for AR (ARCore), which is provided by Google LLC and governed by the Google Privacy Policy."
+        android:gravity="center"
+        android:autoLink="web"
+        android:linksClickable="true"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textSize="10sp"
+        android:textStyle="italic"
+        />
 
 </RelativeLayout>

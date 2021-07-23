@@ -8,7 +8,7 @@
     tools:context=".ArViewActivity">
 
     <fragment
-        android:name="com.fbu.pbluc.artgal.CustomArFragment"
+        android:name="com.fbu.pbluc.artgal.fragments.CustomArFragment"
         android:id="@+id/ar_fragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

@@ -2,33 +2,25 @@ package com.fbu.pbluc.artgal;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.WorkerThread;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
-import com.fbu.pbluc.artgal.callbacks.FirebaseCallback;
+import com.fbu.pbluc.artgal.callbacks.GlideCallback;
+import com.fbu.pbluc.artgal.fragments.CustomArFragment;
 import com.fbu.pbluc.artgal.helpers.CameraPermissionHelper;
 import com.fbu.pbluc.artgal.models.Marker;
-import com.google.android.gms.tasks.Continuation;
-import com.google.android.gms.tasks.OnCompleteListener;
+import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
-import com.google.android.gms.tasks.Tasks;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.Frame;
@@ -37,7 +29,6 @@ import com.google.ar.core.Session;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.Config;
 import com.google.ar.core.TrackingState;
-import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.ImageInsufficientQualityException;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
@@ -45,22 +36,12 @@ import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.assets.RenderableSource;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.ListResult;
 import com.google.firebase.storage.StorageReference;
 
-import java.io.FileDescriptor;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CountDownLatch;
-
-import io.grpc.Context;
 
 
 public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateListener {
@@ -95,7 +76,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     storageReference = firebaseStorage.getReference();
   }
 
-  public void setUpImageDatabase(Config config, Session session) {
+  public void setUpImageDatabase(Session session) {
     firebaseFirestore = FirebaseFirestore.getInstance();
 
     augmentedImageDatabase = new AugmentedImageDatabase(session);
@@ -103,41 +84,35 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     firebaseFirestore
         .collectionGroup(Marker.KEY_UPLOADED_MARKERS)
         .get()
-        .addOnSuccessListener(new OnSuccessListener<QuerySnapshot>() {
-          @Override
-          public void onSuccess(QuerySnapshot queryDocumentSnapshots) {
-            final int[] totalReferenceImages = {queryDocumentSnapshots.size()};
-            Log.i(TAG, "number of reference images: ");
-            for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
-              Marker resultMarker = document.toObject(Marker.class);
+        .addOnSuccessListener(queryDocumentSnapshots -> {
+          final int[] totalReferenceImages = {queryDocumentSnapshots.size()};
+          Log.i(TAG, "number of reference images: ");
+          for (QueryDocumentSnapshot document : queryDocumentSnapshots) {
+            Marker resultMarker = document.toObject(Marker.class);
 
-              String referenceImgFileName = resultMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString();
-              Uri referenceImgUri = Uri.parse(resultMarker.getMarkerImg().get(Marker.KEY_URI).toString());
+            String referenceImgFileName = resultMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString();
+            Uri referenceImgUri = Uri.parse(resultMarker.getMarkerImg().get(Marker.KEY_URI).toString());
 
-              convertUriToBitmap(referenceImgUri, new FirebaseCallback() {
-                @Override
-                public void onSuccess(Bitmap bitmap) {
-                  try {
-                    if(bitmap != null) {
-                      augmentedImageDatabase.addImage(referenceImgFileName, bitmap);
-                    }
-                  } catch (ImageInsufficientQualityException e) {
-                    Log.i(TAG, "Image quality was insufficient! fileName: " + referenceImgFileName);
-                    totalReferenceImages[0] -= 1;
-                  }
-                  Log.i(TAG, "Size of augmented image database: " + augmentedImageDatabase.getNumImages());
-
-                  if(augmentedImageDatabase.getNumImages() == totalReferenceImages[0]) {
-                    // TODO: Update session and configuration
-                    Log.i(TAG, "All images have been added to augmented image database");
-
-                    Config changedConfig = arFragment.getArSceneView().getSession().getConfig();
-                    changedConfig.setAugmentedImageDatabase(augmentedImageDatabase);
-                    arFragment.getArSceneView().getSession().configure(changedConfig);
-                  }
+            convertUriToBitmap(referenceImgUri, bitmap -> {
+              try {
+                if(bitmap != null) {
+                  augmentedImageDatabase.addImage(referenceImgFileName, bitmap);
                 }
-              });
-            }
+              } catch (ImageInsufficientQualityException e) {
+                Log.i(TAG, "Image quality was insufficient! fileName: " + referenceImgFileName);
+                totalReferenceImages[0] -= 1;
+              }
+              Log.i(TAG, "Size of augmented image database: " + augmentedImageDatabase.getNumImages());
+
+              if(augmentedImageDatabase.getNumImages() == totalReferenceImages[0]) {
+                // TODO: Update session and configuration
+                Log.i(TAG, "All images have been added to augmented image database");
+
+                Config changedConfig = arFragment.getArSceneView().getSession().getConfig();
+                changedConfig.setAugmentedImageDatabase(augmentedImageDatabase);
+                arFragment.getArSceneView().getSession().configure(changedConfig);
+              }
+            });
           }
         })
         .addOnFailureListener(new OnFailureListener() {
@@ -148,14 +123,14 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
         });
   }
 
-  public void convertUriToBitmap(Uri uri, final FirebaseCallback firebaseCallback) {
+  public void convertUriToBitmap(Uri uri, final GlideCallback glideCallback) {
     Glide.with(this)
         .asBitmap()
         .load(uri)
         .into(new CustomTarget<Bitmap>() {
           @Override
           public void onResourceReady(@NonNull Bitmap resource, @Nullable Transition<? super Bitmap> transition) {
-            firebaseCallback.onSuccess(resource);
+            glideCallback.onSuccess(resource);
           }
 
           @Override
@@ -173,32 +148,24 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
       if (image.getTrackingState() == TrackingState.TRACKING && image.getTrackingMethod() == AugmentedImage.TrackingMethod.FULL_TRACKING) {
         Log.i(TAG, "Tracked image file name: " + image.getName());
         trackedMarkerDoc = firebaseFirestore
-            .collection("users")
+            .collection(User.KEY_USERS)
             .document(image.getName().substring(0, 28))
-            .collection("uploadedMarkers")
+            .collection(Marker.KEY_UPLOADED_MARKERS)
             .document(image.getName().substring(29, 49));
 
         trackedMarkerDoc
             .get()
-            .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-              @Override
-              public void onSuccess(DocumentSnapshot documentSnapshot) {
-                if(documentSnapshot.exists()) {
-                  trackedMarker = documentSnapshot.toObject(Marker.class);
-                  trackedAugmentedObjUri = trackedMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+            .addOnSuccessListener(documentSnapshot -> {
+              if(documentSnapshot.exists()) {
+                trackedMarker = documentSnapshot.toObject(Marker.class);
+                trackedAugmentedObjUri = trackedMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
 
-                  anchor = image.createAnchor(image.getCenterPose());
+                anchor = image.createAnchor(image.getCenterPose());
 
-                  createModel(anchor, trackedAugmentedObjUri);
-                }
+                createModel(anchor, trackedAugmentedObjUri);
               }
             })
-            .addOnFailureListener(new OnFailureListener() {
-              @Override
-              public void onFailure(@NonNull Exception e) {
-                Log.e(TAG, "onFailure: getting tracked marker document failed", e);
-              }
-            });
+            .addOnFailureListener(e -> Log.e(TAG, "onFailure: getting tracked marker document failed", e));
       }
     }
 
@@ -209,20 +176,12 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
       augmentedObjRef
           .getDownloadUrl()
-          .addOnSuccessListener(new OnSuccessListener<Uri>() {
-            @Override
-            public void onSuccess(Uri augmentedObjUri) {
-              Log.i(TAG, "onSuccess: Retrieved augmented object file");
+          .addOnSuccessListener(augmentedObjUri -> {
+            Log.i(TAG, "onSuccess: Retrieved augmented object file");
 
-              buildModel(augmentedObjUri, anchor);
-            }
+            buildModel(augmentedObjUri, anchor);
           })
-          .addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-              Log.e(TAG, "onFailure: Could not get augmented object file", e);
-            }
-          });
+          .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not get augmented object file", e));
 
 
   }
@@ -286,12 +245,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
   @Override
   protected void onDestroy() {
-    AsyncTask.execute(new Runnable() {
-      @Override
-      public void run() {
-        arFragment.getArSceneView().getSession().close();
-      }
-    });
+    AsyncTask.execute(() -> arFragment.getArSceneView().getSession().close());
     super.onDestroy();
   }
 }
