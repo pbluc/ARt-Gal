@@ -116,19 +116,16 @@ ARt Gal is an Android and multisharing AR app that allows users to detect and au
 ![](https://i.imgur.com/ezlmLqX.png)
 
 
-### [BONUS] Digital Wireframes & Mockups
-
-### [BONUS] Interactive Prototype
-
 ## Schema 
 ### Models
 #### User
 | Property   | Type   | Description |
 | ---------- | ------ | ----------- |
 | DocumentId | String | Unique id for the user document (default field) |
+| email | String | Email used to log in into user acccount through Firebase Authentication |
 | username   | String | Username handle used to log into user account |
-| name       | Map    | Contains two keys respectively storing in their values the first and last name of the user |
-| password   | String | Password used to log in into user account |
+| name       | Map    | Contains two keys respectively storing in their values the first (fName) and last name (lName) of the user |
+| password   | String | Password used to log in into user account through Firebase Authentication |
 | markers    | Cloud Firestore Reference | Stores a reference to the markers subcollection |
 | createdAt  | Date and time | Date when user document is created |
 | updatedAt  | Date and time | Date when user document is last updated |
@@ -140,11 +137,12 @@ ARt Gal is an Android and multisharing AR app that allows users to detect and au
 | title    |   String |Name of the marker given by user|
 | description| String |Marker description given by user|
 | user     | Cloud Firestore Reference |Stores a reference to the user document|
-| markerImg| String |File name of the reference image (document ID will be appended to the front)|
-| augmentedObj|String | File name of the augmented object file (document ID will be appended to the front)|
+| markerImg| Map |Contains two keys respectively storing in the values of the uri and file name (fileName) of the reference image |
+| augmentedObj|Map | Contains two keys respectively storing in the values of the uri and file name (fileName) of the 3D model asset |
 | likesCount |Number | Number of likes for the marker|
 | createdAt|Date and time|Date when marker document is createdDate when marker document is created|
 | updatedAt|Date and time|Date when marker document is last updated|
+
 
 ### Networking
 - [Add list of network requests by screen ]
