@@ -21,6 +21,7 @@ import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.fbu.pbluc.artgal.callbacks.FirebaseCallback;
+import com.fbu.pbluc.artgal.helpers.CameraPermissionHelper;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.google.android.gms.tasks.Continuation;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -169,7 +170,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     Frame frame = arFragment.getArSceneView().getArFrame();
     Collection<AugmentedImage> images = frame.getUpdatedTrackables(AugmentedImage.class);
     for (AugmentedImage image : images) {
-      if (image.getTrackingState() == TrackingState.TRACKING) {
+      if (image.getTrackingState() == TrackingState.TRACKING && image.getTrackingMethod() == AugmentedImage.TrackingMethod.FULL_TRACKING) {
         Log.i(TAG, "Tracked image file name: " + image.getName());
         trackedMarkerDoc = firebaseFirestore
             .collection("users")
@@ -272,6 +273,15 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   protected void onPause() {
     arFragment.getArSceneView().getSession().pause();
     super.onPause();
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+    // Request the camera permission, if necessary.
+    if (!CameraPermissionHelper.hasCameraPermission(this)) {
+      CameraPermissionHelper.requestCameraPermission(this);
+    }
   }
 
   @Override

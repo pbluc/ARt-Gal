@@ -44,7 +44,7 @@
         android:id="@+id/tvSelectedAugmentedObject"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Only .fbx, .obj, .gltf, .glb assets"
+        android:text="Only .glb assets"
         android:textSize="18sp"/>
 
     <Button

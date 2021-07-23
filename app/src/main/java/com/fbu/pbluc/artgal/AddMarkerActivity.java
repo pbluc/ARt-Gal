@@ -196,7 +196,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     etTitle.setText("");
     etDescription.setText("");
     ivReferenceImage.setImageResource(0);
-    tvSelectedAugmentedObject.setText("Only .fbx, .obj, .gltf, .glb assets");
+    tvSelectedAugmentedObject.setText("Only .glb assets");
   }
 
   private void updateCreatedMarkerDocument(DocumentReference currentUserDoc, String markerId, Marker marker) {
