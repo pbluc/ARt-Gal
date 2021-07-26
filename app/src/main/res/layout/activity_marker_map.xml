@@ -12,6 +12,15 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:id="@+id/mapFragment"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        map:mapType="normal"
+        map:uiZoomControls="true"
+        map:uiZoomGestures="true"
+        map:uiCompass="true"
+        map:uiTiltGestures="false"
+        map:uiRotateGestures="true"
+        map:uiScrollGestures="true"
+        map:liteMode="false"
+        />
 
 </RelativeLayout>

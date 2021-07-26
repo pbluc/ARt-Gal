@@ -111,6 +111,7 @@ public class MarkerMapActivity extends AppCompatActivity {
   void getMyLocation() {
     map.setMyLocationEnabled(true);
     map.getUiSettings().setMyLocationButtonEnabled(true);
+    map.setIndoorEnabled(true);
 
     FusedLocationProviderClient locationClient = getFusedLocationProviderClient(this);
     locationClient.getLastLocation()
