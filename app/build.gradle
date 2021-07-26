@@ -36,6 +36,7 @@ repositories {
 }
 
 ext {
+    permissionDispatcherVersion = "4.7.0"
     googlePlayVersion = "17.0.0"
 }
 
@@ -55,6 +56,9 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.6.0-SNAPSHOT'
     implementation "com.google.android.gms:play-services-maps:$googlePlayVersion"
     implementation "com.google.android.gms:play-services-location:$googlePlayVersion"
+    implementation "org.permissionsdispatcher:permissionsdispatcher:$permissionDispatcherVersion"
+    annotationProcessor "org.permissionsdispatcher:permissionsdispatcher-processor:$permissionDispatcherVersion"
+
     implementation 'androidx.recyclerview:recyclerview:1.1.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.0.0'
     // Provides ARCore Session and related resources.

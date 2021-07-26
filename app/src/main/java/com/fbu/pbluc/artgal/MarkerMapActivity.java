@@ -1,17 +1,45 @@
 package com.fbu.pbluc.artgal;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
+import android.os.Looper;
 import android.text.TextUtils;
+import android.util.Log;
 import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.LocationSettingsRequest;
+import com.google.android.gms.location.SettingsClient;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import permissions.dispatcher.NeedsPermission;
+import permissions.dispatcher.RuntimePermissions;
+
+import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
+
+@RuntimePermissions
 public class MarkerMapActivity extends AppCompatActivity {
 
   private SupportMapFragment mapFragment;
@@ -39,7 +67,6 @@ public class MarkerMapActivity extends AppCompatActivity {
       // is not null.
       mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
     }
-
     setUpMapIfNeeded();
   }
 
@@ -64,12 +91,121 @@ public class MarkerMapActivity extends AppCompatActivity {
     map = googleMap;
     if(googleMap != null) {
       // Map is ready
-      Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
+      //Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
 
-      //MapDemoActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
-      //MapDemoActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
+      MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
+      MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
     } else {
-      Toast.makeText(this, "Error - Map was null!!", Toast.LENGTH_SHORT).show();
+      //Toast.makeText(this, "Error - Map was null!!", Toast.LENGTH_SHORT).show();
     }
+  }
+
+  @Override
+  public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    MarkerMapActivityPermissionsDispatcher.onRequestPermissionsResult(this, requestCode, grantResults);
+  }
+
+  @SuppressWarnings({"MissingPermission"})
+  @NeedsPermission({Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
+  void getMyLocation() {
+    map.setMyLocationEnabled(true);
+    map.getUiSettings().setMyLocationButtonEnabled(true);
+
+    FusedLocationProviderClient locationClient = getFusedLocationProviderClient(this);
+    locationClient.getLastLocation()
+        .addOnSuccessListener(new OnSuccessListener<Location>() {
+          @Override
+          public void onSuccess(Location location) {
+            if (location != null) {
+              onLocationChanged(location);
+            }
+          }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+          @Override
+          public void onFailure(@NonNull Exception e) {
+            Log.d("MapDemoActivity", "Error trying to get last GPS location");
+            e.printStackTrace();
+          }
+        });
+  }
+
+  @NeedsPermission({Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})
+  protected void startLocationUpdates() {
+    mLocationRequest = new LocationRequest();
+    mLocationRequest.setPriority(LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY);
+    mLocationRequest.setInterval(UPDATE_INTERVAL);
+    mLocationRequest.setFastestInterval(FASTEST_INTERVAL);
+
+    LocationSettingsRequest.Builder builder = new LocationSettingsRequest.Builder();
+    builder.addLocationRequest(mLocationRequest);
+    LocationSettingsRequest locationSettingsRequest = builder.build();
+
+    SettingsClient settingsClient = LocationServices.getSettingsClient(this);
+    settingsClient.checkLocationSettings(locationSettingsRequest);
+    //noinspection MissingPermission
+    getFusedLocationProviderClient(this).requestLocationUpdates(mLocationRequest, new LocationCallback() {
+          @Override
+          public void onLocationResult(LocationResult locationResult) {
+            onLocationChanged(locationResult.getLastLocation());
+          }
+        },
+        Looper.myLooper());
+  }
+
+  public void onLocationChanged(Location location) {
+    // GPS may be turned off
+    if (location == null) {
+      return;
+    }
+
+    mCurrentLocation = location;
+    String msg = "Updated Location: " +
+        Double.toString(location.getLatitude()) + "," +
+        Double.toString(location.getLongitude());
+    //Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    displayLocation();
+  }
+
+  private void displayLocation() {
+    if (mCurrentLocation != null) {
+      //Toast.makeText(this, "GPS location was found!", Toast.LENGTH_SHORT).show();
+      LatLng latLng = new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude());
+      CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
+      map.animateCamera(cameraUpdate);
+    } else {
+      //Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
+    }
+  }
+
+  public void onSaveInstanceState(Bundle savedInstanceState) {
+    savedInstanceState.putParcelable(KEY_LOCATION, mCurrentLocation);
+    super.onSaveInstanceState(savedInstanceState);
+  }
+
+  @Override
+  protected void onResume() {
+    super.onResume();
+
+    displayLocation();
+
+    MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
+  }
+
+  /*
+   * Called when the Activity becomes visible.
+   */
+  @Override
+  protected void onStart() {
+    super.onStart();
+  }
+
+  /*
+   * Called when the Activity is no longer visible.
+   */
+  @Override
+  protected void onStop() {
+    super.onStop();
   }
 }
