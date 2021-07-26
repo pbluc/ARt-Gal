@@ -22,6 +22,7 @@ public class MainActivity extends AppCompatActivity {
   private Button btnUploadMarker;
   private Button btnViewMarker;
   private Button btnArView;
+  private Button btnMarkerMap;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -34,36 +35,21 @@ public class MainActivity extends AppCompatActivity {
     btnUploadMarker = findViewById(R.id.btnUploadMarker);
     btnViewMarker = findViewById(R.id.btnViewMarkers);
     btnArView = findViewById(R.id.btnArView);
+    btnMarkerMap = findViewById(R.id.btnMarkerMap);
 
     // Enable AR-related functionality on ARCore supported devices only.
     maybeEnableArButton();
 
-    btnLogout.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        logoutUser();
-      }
-    });
+    btnLogout.setOnClickListener(v -> logoutUser());
 
-    btnUploadMarker.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        goUploadActivity();
-      }
-    });
+    btnUploadMarker.setOnClickListener(v -> goUploadActivity());
 
-    btnViewMarker.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        goMarkersActivity();
-      }
-    });
+    btnViewMarker.setOnClickListener(v -> goMarkersActivity());
 
-    btnArView.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        goArViewActivity();
-      }
+    btnArView.setOnClickListener(v -> goArViewActivity());
+
+    btnMarkerMap.setOnClickListener(v -> {
+      goMarkerMapActivity();
     });
 
   }
@@ -117,6 +103,11 @@ public class MainActivity extends AppCompatActivity {
     Intent i = new Intent(this, LoginActivity.class);
     startActivity(i);
     finish();
+  }
+
+  private void goMarkerMapActivity() {
+    Intent i = new Intent(this, MarkerMapActivity.class);
+    startActivity(i);
   }
 
   private void logoutUser() {

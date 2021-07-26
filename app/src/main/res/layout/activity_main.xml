@@ -46,6 +46,13 @@
             android:layout_height="wrap_content"
             android:text="@string/open_ar"
             android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/btnMarkerMap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/marker_map"/>
+
     </LinearLayout>
 
     <TextView
