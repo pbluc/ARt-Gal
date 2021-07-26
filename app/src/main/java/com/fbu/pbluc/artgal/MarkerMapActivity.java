@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.icu.text.Transliterator;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -135,6 +136,13 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
             map.setOnMarkerDragListener(this);
 
             placedMarker.setDraggable(true);
+          });
+
+          map.setOnMyLocationButtonClickListener(() -> {
+            if(placedMarker != null) {
+              placedMarker.setPosition(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
+            }
+            return false;
           });
         }
       }
