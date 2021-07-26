@@ -153,7 +153,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
 
   private void addAllMarkersToMap() {
     firebaseFirestore
-        .collectionGroup("uploadedMarkers")
+        .collectionGroup(Marker.KEY_UPLOADED_MARKERS)
         .whereNotEqualTo(Marker.KEY_LOCATION, null)
         .get()
         .addOnSuccessListener(queryDocumentSnapshots -> {
@@ -174,6 +174,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
                 .position(listingPosition)
                 .title(title)
                 .snippet(description));
+            Log.i(TAG, "Successfully added marker to map");
           }
         })
         .addOnFailureListener(new OnFailureListener() {
@@ -205,6 +206,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
           public void onSuccess(Location location) {
             if (location != null) {
               onLocationChanged(location);
+              displayLocation();
             }
           }
         })
@@ -251,7 +253,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         Double.toString(location.getLatitude()) + "," +
         Double.toString(location.getLongitude());
     //Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    displayLocation();
+    //displayLocation();
   }
 
   private void displayLocation() {
