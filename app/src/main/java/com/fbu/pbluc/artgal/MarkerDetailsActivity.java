@@ -1,16 +1,25 @@
 package com.fbu.pbluc.artgal;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.models.Marker;
@@ -29,6 +38,11 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import org.w3c.dom.Text;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 public class MarkerDetailsActivity extends AppCompatActivity {
   private final static String TAG = "MarkerDetailsActivity";
@@ -51,6 +65,8 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private TextView tvUserFullName;
   private TextView tvUsername;
   private ImageView ivReferenceImageMedia;
+  private ImageView ivOriginalReferenceImageMedia;
+  private ImageView ivDownloadImgUrl;
   private LinearLayout deleteMarkerLayoutContainer;
 
   private Marker marker;
@@ -73,6 +89,8 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     tvUserFullName = findViewById(R.id.tvUserFullName);
     tvUsername = findViewById(R.id.tvUsername);
     ivReferenceImageMedia = findViewById(R.id.ivReferenceImageMedia);
+    ivOriginalReferenceImageMedia = findViewById(R.id.ivOriginalReferenceImageMedia);
+    ivDownloadImgUrl = findViewById(R.id.ivDownloadImgUrl);
     deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
 
     String userUid = getIntent().getStringExtra("userMarkerUid");
@@ -110,7 +128,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
                   }
                 });
 
-            markerImgReference= storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
+            markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
 
             // Check if the augmented object file exists in Firebase Storage
             augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
@@ -136,6 +154,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
                   @Override
                   public void onSuccess(Uri uri) {
                     Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
+                    Glide.with(MarkerDetailsActivity.this).load(uri).into(ivOriginalReferenceImageMedia);
                   }
                 })
                 .addOnFailureListener(new OnFailureListener() {
@@ -158,10 +177,20 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     } else {
       deleteMarkerLayoutContainer.setVisibility(View.GONE);
     }
+
+    ivDownloadImgUrl.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+
+        saveImageToGallery();
+      }
+    });
   }
 
   private void deleteMarkerFilesFromStorage() {
-   // Delete the file
+    // Delete the file
     markerImgReference
         .delete()
         .addOnSuccessListener(new OnSuccessListener<Void>() {
@@ -237,4 +266,46 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     finish();
   }
 
+  private void saveImageToGallery() {
+    // Get the image from the ImageView
+    BitmapDrawable markerImg = (BitmapDrawable) ivOriginalReferenceImageMedia.getDrawable();
+    Bitmap markerImgBitmap = markerImg.getBitmap();
+
+    String markerFileName = marker.getMarkerImg().get(Marker.KEY_FILENAME).toString();
+    String markerFileExtension = markerFileName.substring(markerFileName.lastIndexOf(".") + 1);
+
+    FileOutputStream outputStream = null;
+    File storageLoc = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+    File dir = new File(storageLoc.getAbsolutePath() + "/ARtGal");
+    dir.mkdirs();
+
+    String fileName = String.format("%d." + markerFileExtension, System.currentTimeMillis());
+    File outFile = new File(dir, fileName);
+
+    try {
+      outputStream = new FileOutputStream(outFile);
+
+      if (markerFileExtension.equals("jpeg") || markerFileExtension.equals("jpg")) {
+        markerImgBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+      } else if (markerFileExtension.equals("png")) {
+        markerImgBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
+      }
+
+      outputStream.flush();
+      outputStream.close();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    // Refresh gallery
+    Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+    intent.setData(Uri.fromFile(outFile));
+    this.sendBroadcast(intent);
+
+
+    Toast.makeText(this, "Image saved to gallery!", Toast.LENGTH_SHORT).show();
+    Log.i(TAG, "Saved image to gallery");
+  }
 }

@@ -3,8 +3,10 @@ package com.fbu.pbluc.artgal;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.AppOpsManager;
 import android.content.Intent;
 import android.database.Cursor;
+import android.hardware.camera2.params.SessionConfiguration;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -22,6 +24,9 @@ import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.ar.core.AugmentedImageDatabase;
+import com.google.ar.core.Session;
+import com.google.ar.sceneform.ArSceneView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -105,8 +110,10 @@ public class AddMarkerActivity extends AppCompatActivity {
   }
 
   private void addMarkerDocument() {
+
     String title = etTitle.getText().toString().trim();
     String description = etDescription.getText().toString().trim();
+
     DocumentReference currentUserDoc = firebaseFirestore.collection(User.KEY_USERS).document(currentUser.getUid());
 
     Map<String, Object> markerImg = new HashMap<>();
