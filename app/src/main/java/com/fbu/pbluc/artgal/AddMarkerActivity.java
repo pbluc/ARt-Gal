@@ -14,14 +14,17 @@ import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
+import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.AugmentedImageDatabase;
@@ -45,6 +48,7 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   private static final int REFERENCE_IMG_REQUEST_CODE = 1; // onActivityResult request
   private static final int AUGMENTED_OBJ_REQUEST_CODE = 2;
+  private static final int NEW_MARKER_LOC_REQUEST_CODE = 3;
 
   private FirebaseAuth firebaseAuth;
   private FirebaseUser currentUser;
@@ -59,11 +63,15 @@ public class AddMarkerActivity extends AppCompatActivity {
   private Button btnFindReferenceImg;
   private Button btnFindAugmentedObject;
   private Button btnSubmit;
+  private Button btnOpenMaps;
   private ImageView ivReferenceImage;
   private TextView tvSelectedAugmentedObject;
+  private RadioButton rbAddLocation;
 
   private Uri referenceImgUri;
   private Uri augmentedObjUri;
+
+  private LatLng markerLoc;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -83,8 +91,10 @@ public class AddMarkerActivity extends AppCompatActivity {
     btnFindReferenceImg = findViewById(R.id.btnFindReferenceImg);
     btnFindAugmentedObject = findViewById(R.id.btnFindAugmentedObject);
     btnSubmit = findViewById(R.id.btnSubmit);
+    btnOpenMaps = findViewById(R.id.btnOpenMaps);
     ivReferenceImage = findViewById(R.id.ivReferenceImage);
     tvSelectedAugmentedObject = findViewById(R.id.tvSelectedAugmentedObject);
+    rbAddLocation = findViewById(R.id.rbAddLocation);
 
     btnFindReferenceImg.setOnClickListener(new View.OnClickListener() {
       @Override
@@ -104,6 +114,31 @@ public class AddMarkerActivity extends AppCompatActivity {
       @Override
       public void onClick(View v) {
         addMarkerDocument();
+      }
+    });
+
+    rbAddLocation.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        if(!rbAddLocation.isSelected()) {
+          rbAddLocation.setChecked(true);
+          rbAddLocation.setSelected(true);
+          // Reveal button to open map view
+          btnOpenMaps.setVisibility(View.VISIBLE);
+        } else {
+          rbAddLocation.setChecked(false);
+          rbAddLocation.setSelected(false);
+          // Hide button to open map view
+          btnOpenMaps.setVisibility(View.GONE);
+        }
+      }
+    });
+
+    btnOpenMaps.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        // Go to map view
+        goMarkerMapActivity();
       }
     });
 
@@ -133,6 +168,13 @@ public class AddMarkerActivity extends AppCompatActivity {
       marker.setUpdatedAt(FieldValue.serverTimestamp());
       marker.setMarkerImg(markerImg);
       marker.setAugmentedObj(augmentedObj);
+
+      if (markerLoc != null) {
+        Map<String, Object> location = new HashMap<>();
+        location.put(Marker.KEY_LATITUDE, markerLoc.latitude);
+        location.put(Marker.KEY_LONGITUDE, markerLoc.longitude);
+        marker.setLocation(location);
+      }
 
       currentUserDoc.
           collection(Marker.KEY_UPLOADED_MARKERS)
@@ -384,6 +426,22 @@ public class AddMarkerActivity extends AppCompatActivity {
           }
         }
         break;
+      case NEW_MARKER_LOC_REQUEST_CODE:
+        if(resultCode == RESULT_OK) {
+          if(data != null) {
+            double[] latLng = data.getDoubleArrayExtra("newMarkerLatLng");
+
+            if(latLng[0] != 0 && latLng[1] != 0) {
+              markerLoc = new LatLng(latLng[0], latLng[1]);
+              Toast.makeText(AddMarkerActivity.this, "Got location!", Toast.LENGTH_SHORT).show();
+            } else {
+              Log.e(TAG, "Invalid latitude and longitude values");
+            }
+          } else {
+            return;
+          }
+        }
+        break;
       default:
         break;
     }
@@ -416,5 +474,10 @@ public class AddMarkerActivity extends AppCompatActivity {
     Intent i = new Intent(this, LoginActivity.class);
     startActivity(i);
     finish();
+  }
+
+  private void goMarkerMapActivity() {
+    Intent i = new Intent(this, MarkerMapActivity.class);
+    startActivityForResult(i, NEW_MARKER_LOC_REQUEST_CODE);
   }
 }

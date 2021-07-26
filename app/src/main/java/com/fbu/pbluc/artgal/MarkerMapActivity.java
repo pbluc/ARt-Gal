@@ -2,18 +2,18 @@ package com.fbu.pbluc.artgal;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
-import android.content.pm.PackageManager;
+import android.app.Activity;
+import android.content.Intent;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
-import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
+import android.view.View;
+import android.widget.Button;
+
+import com.fbu.pbluc.artgal.models.Marker;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
@@ -28,11 +28,12 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
@@ -40,7 +41,12 @@ import permissions.dispatcher.RuntimePermissions;
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
 @RuntimePermissions
-public class MarkerMapActivity extends AppCompatActivity {
+public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.OnMarkerDragListener {
+
+  private static final String TAG = "MarkerMapActivity";
+  private FirebaseFirestore firebaseFirestore;
+
+  private Button btnDoneSettingLoc;
 
   private SupportMapFragment mapFragment;
   private GoogleMap map;
@@ -49,7 +55,9 @@ public class MarkerMapActivity extends AppCompatActivity {
   private long UPDATE_INTERVAL = 60000;  /* 60 secs */
   private long FASTEST_INTERVAL = 5000; /* 5 secs */
 
-  private final static String KEY_LOCATION = "location";
+  private final static String KEY_LOC = "location";
+
+  private com.google.android.gms.maps.model.Marker placedMarker;
 
   /*
    * Define a request code to send to Google Play services This code is
@@ -62,20 +70,36 @@ public class MarkerMapActivity extends AppCompatActivity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_marker_map);
 
-    if (savedInstanceState != null && savedInstanceState.keySet().contains(KEY_LOCATION)) {
+    btnDoneSettingLoc = findViewById(R.id.btnDoneSettingLoc);
+
+    firebaseFirestore = FirebaseFirestore.getInstance();
+
+    if (savedInstanceState != null && savedInstanceState.keySet().contains(KEY_LOC)) {
       // Since KEY_LOCATION was found in the Bundle, we can be sure that mCurrentLocation
       // is not null.
-      mCurrentLocation = savedInstanceState.getParcelable(KEY_LOCATION);
+      mCurrentLocation = savedInstanceState.getParcelable(KEY_LOC);
     }
+
+    btnDoneSettingLoc.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        double[] latLng = {placedMarker.getPosition().latitude, placedMarker.getPosition().longitude};
+        Intent returnIntent = new Intent();
+        returnIntent.putExtra("newMarkerLatLng", latLng);
+        setResult(Activity.RESULT_OK, returnIntent);
+        finish();
+      }
+    });
+
     setUpMapIfNeeded();
   }
 
   protected void setUpMapIfNeeded() {
     // Do a null check to confirm that we have not already instantiated the map
-    if(mapFragment == null) {
+    if (mapFragment == null) {
       mapFragment = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapFragment));
       // Check if we were successful in obtaining the map
-      if(mapFragment != null) {
+      if (mapFragment != null) {
         mapFragment.getMapAsync(new OnMapReadyCallback() {
           @Override
           public void onMapReady(GoogleMap googleMap) {
@@ -89,15 +113,68 @@ public class MarkerMapActivity extends AppCompatActivity {
   // The Map is verified. It is now safe to manipulate the map.
   protected void loadMap(GoogleMap googleMap) {
     map = googleMap;
-    if(googleMap != null) {
+    if (googleMap != null) {
       // Map is ready
       //Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
 
       MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
       MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
+
+      Intent returnIntent = new Intent();
+      if(getCallingActivity() != null) {
+        if(getCallingActivity().getClassName().equals("com.fbu.pbluc.artgal.MainActivity")) {
+          addAllMarkersToMap();
+        } else if(getCallingActivity().getClassName().equals("com.fbu.pbluc.artgal.AddMarkerActivity")) {
+          btnDoneSettingLoc.setVisibility(View.VISIBLE);
+
+          map.setOnMapClickListener(placedLatLng -> {
+            map.clear();
+            placedMarker = map.addMarker(new MarkerOptions()
+                .position(placedLatLng));
+
+            map.setOnMarkerDragListener(this);
+
+            placedMarker.setDraggable(true);
+          });
+        }
+      }
     } else {
       //Toast.makeText(this, "Error - Map was null!!", Toast.LENGTH_SHORT).show();
     }
+  }
+
+  private void addAllMarkersToMap() {
+    firebaseFirestore
+        .collectionGroup("uploadedMarkers")
+        .whereNotEqualTo(Marker.KEY_LOCATION, null)
+        .get()
+        .addOnSuccessListener(queryDocumentSnapshots -> {
+          for(DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
+            Marker retrievedMarker = documentSnapshot.toObject(Marker.class);
+
+            String title = retrievedMarker.getTitle();
+            String description = retrievedMarker.getDescription();
+
+            Double lat = (Double) retrievedMarker.getLocation().get(Marker.KEY_LATITUDE);
+            Double lng = (Double) retrievedMarker.getLocation().get(Marker.KEY_LONGITUDE);
+
+            // listingPosition is a LatLng point
+            LatLng listingPosition = new LatLng(lat, lng);
+
+            // Create the marker on the fragment
+            com.google.android.gms.maps.model.Marker mapMarker = map.addMarker(new MarkerOptions()
+                .position(listingPosition)
+                .title(title)
+                .snippet(description));
+          }
+        })
+        .addOnFailureListener(new OnFailureListener() {
+          @Override
+          public void onFailure(@NonNull Exception e) {
+            Log.e(TAG, "Could not retrieve all markers", e);
+          }
+        });
+
   }
 
   @Override
@@ -181,7 +258,7 @@ public class MarkerMapActivity extends AppCompatActivity {
   }
 
   public void onSaveInstanceState(Bundle savedInstanceState) {
-    savedInstanceState.putParcelable(KEY_LOCATION, mCurrentLocation);
+    savedInstanceState.putParcelable(KEY_LOC, mCurrentLocation);
     super.onSaveInstanceState(savedInstanceState);
   }
 
@@ -208,5 +285,20 @@ public class MarkerMapActivity extends AppCompatActivity {
   @Override
   protected void onStop() {
     super.onStop();
+  }
+
+  @Override
+  public void onMarkerDragStart(com.google.android.gms.maps.model.Marker marker) {
+
+  }
+
+  @Override
+  public void onMarkerDrag(com.google.android.gms.maps.model.Marker marker) {
+
+  }
+
+  @Override
+  public void onMarkerDragEnd(com.google.android.gms.maps.model.Marker marker) {
+    placedMarker.setPosition(marker.getPosition());
   }
 }

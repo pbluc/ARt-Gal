@@ -15,6 +15,7 @@ import com.google.firebase.auth.FirebaseUser;
 public class MainActivity extends AppCompatActivity {
 
   private final static String TAG = "MainActivity";
+  private static final int VIEW_ALL_MARKERS = 0;
 
   private FirebaseAuth firebaseAuth;
 
@@ -107,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
 
   private void goMarkerMapActivity() {
     Intent i = new Intent(this, MarkerMapActivity.class);
-    startActivity(i);
+    startActivityFromChild(this, i, VIEW_ALL_MARKERS, null);
   }
 
   private void logoutUser() {

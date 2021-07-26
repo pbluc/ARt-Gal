@@ -47,6 +47,29 @@
         android:text="Only .glb assets"
         android:textSize="18sp"/>
 
+    <RelativeLayout
+        android:layout_marginTop="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RadioButton
+            android:id="@+id/rbAddLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Add Location"
+            android:checked="false"
+            android:clickable="true"/>
+
+        <Button
+            android:id="@+id/btnOpenMaps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/open_maps"
+            android:layout_alignParentRight="true"
+            android:visibility="gone"/>
+
+    </RelativeLayout>
+
     <Button
         android:id="@+id/btnSubmit"
         android:layout_width="match_parent"

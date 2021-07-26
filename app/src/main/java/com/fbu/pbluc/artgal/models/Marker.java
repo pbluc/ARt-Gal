@@ -29,12 +29,16 @@ public class Marker {
   public static final String KEY_URI = "uri";
   public static final String KEY_CREATED_AT = "createdAt";
   public static final String KEY_UPDATED_AT = "updatedAt";
+  public static final String KEY_LOCATION = "location";
+  public static final String KEY_LATITUDE = "latitude";
+  public static final String KEY_LONGITUDE = "longitude";
 
   private String title;
   private String description;
   private DocumentReference user;
   private Map<String, Object> markerImg;
   private Map<String, Object> augmentedObj;
+  private Map<String, Object> location;
   private Object createdAt;
   private Object updatedAt;
 
@@ -79,6 +83,14 @@ public class Marker {
 
   public void setAugmentedObj(Map<String, Object> augmentedObj) {
     this.augmentedObj = augmentedObj;
+  }
+
+  public Map<String, Object> getLocation() {
+    return location;
+  }
+
+  public void setLocation(Map<String, Object> location) {
+    this.location = location;
   }
 
   public Object getCreatedAt() {
