@@ -43,4 +43,7 @@
     <string name="png">png</string>
     <string name="main_activity">com.fbu.pbluc.artgal.MainActivity</string>
     <string name="add_marker_activity">com.fbu.pbluc.artgal.AddMarkerActivity</string>
+    <string name="marker_details_activity">com.fbu.pbluc.artgal.MarkerDetailsActivity</string>
+    <string name="user_uid_editing_marker">userUidFromEditingMarker</string>
+    <string name="marker_uid_editing_marker">currentEditingMarkerUid</string>
 </resources>

@@ -47,6 +47,8 @@ import java.io.IOException;
 public class MarkerDetailsActivity extends AppCompatActivity {
   private final static String TAG = "MarkerDetailsActivity";
 
+  private static final int EDIT_CURRENT_MARKER_REQUEST_CODE = 1;
+
   private FirebaseAuth firebaseAuth;
   private FirebaseStorage firebaseStorage;
   private FirebaseFirestore firebaseFirestore;
@@ -68,6 +70,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private ImageView ivOriginalReferenceImageMedia;
   private ImageView ivDownloadImgUrl;
   private LinearLayout deleteMarkerLayoutContainer;
+  private LinearLayout editMarkerLayoutContainer;
 
   private Marker marker;
 
@@ -92,6 +95,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     ivOriginalReferenceImageMedia = findViewById(R.id.ivOriginalReferenceImageMedia);
     ivDownloadImgUrl = findViewById(R.id.ivDownloadImgUrl);
     deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
+    editMarkerLayoutContainer = findViewById(R.id.editMarkerLayoutContainer);
 
     String userUid = getIntent().getStringExtra(getString(R.string.user_marker_uid));
     String markerUid = getIntent().getStringExtra(getString(R.string.clicked_marker_uid));
@@ -151,9 +155,13 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
     if (userUid.equals(currentUser.getUid())) {
       deleteMarkerLayoutContainer.setVisibility(View.VISIBLE);
+      editMarkerLayoutContainer.setVisibility(View.VISIBLE);
+
       deleteMarkerLayoutContainer.setOnClickListener(v -> deleteMarkerFilesFromStorage());
+      editMarkerLayoutContainer.setOnClickListener(v -> editCurrentMarker(userUid, markerUid));
     } else {
       deleteMarkerLayoutContainer.setVisibility(View.GONE);
+      editMarkerLayoutContainer.setVisibility(View.GONE);
     }
 
     ivDownloadImgUrl.setOnClickListener(v -> {
@@ -162,6 +170,18 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
       saveImageToGallery();
     });
+  }
+
+  private void editCurrentMarker(String userUid, String markerUid) {
+    Intent intent = new Intent(this, AddMarkerActivity.class);
+    intent.putExtra(getString(R.string.user_uid_editing_marker), userUid);
+    intent.putExtra(getString(R.string.marker_uid_editing_marker), markerUid);
+    startActivityForResult(intent, EDIT_CURRENT_MARKER_REQUEST_CODE);
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
   }
 
   private void deleteMarkerFilesFromStorage() {

@@ -132,6 +132,7 @@
         android:id="@+id/deleteMarkerLayoutContainer"
         android:layout_below="@id/secondLinearLayoutContainer"
         android:layout_alignEnd="@id/ivReferenceImageMedia"
+        android:layout_marginTop="10dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -149,6 +150,32 @@
             android:layout_height="wrap_content"
             android:text="Delete"
             android:layout_gravity="center_horizontal"/>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/editMarkerLayoutContainer"
+        android:layout_below="@id/secondLinearLayoutContainer"
+        android:layout_alignStart="@id/ivReferenceImageMedia"
+        android:layout_marginTop="10dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:clickable="true"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@drawable/ic_edit_marker"
+            android:layout_gravity="center_horizontal"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit"
+            android:layout_gravity="center_horizontal"/>
+
     </LinearLayout>
 
 </RelativeLayout>

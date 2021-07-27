@@ -25,14 +25,17 @@ import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.Session;
 import com.google.ar.sceneform.ArSceneView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.storage.FirebaseStorage;
@@ -57,6 +60,8 @@ public class AddMarkerActivity extends AppCompatActivity {
   private StorageReference storageReference;
   private StorageReference referenceImagesReference;
   private StorageReference augmentedObjReference;
+
+  private DocumentReference editingMarkerRef;
 
   private EditText etTitle;
   private EditText etDescription;
@@ -96,11 +101,52 @@ public class AddMarkerActivity extends AppCompatActivity {
     tvSelectedAugmentedObject = findViewById(R.id.tvSelectedAugmentedObject);
     rbAddLocation = findViewById(R.id.rbAddLocation);
 
+    String userUidEditingMarker = getIntent().getStringExtra(getString(R.string.user_uid_editing_marker));
+    String markerUidEditingMarker = getIntent().getStringExtra(getString(R.string.marker_uid_editing_marker));
+
+    if (userUidEditingMarker != null && markerUidEditingMarker != null) {
+      editingMarkerRef = firebaseFirestore
+          .collection(User.KEY_USERS)
+          .document(userUidEditingMarker)
+          .collection(Marker.KEY_UPLOADED_MARKERS)
+          .document(markerUidEditingMarker);
+
+      editingMarkerRef
+          .get()
+          .addOnSuccessListener(documentSnapshot -> {
+            Marker editingMarker = documentSnapshot.toObject(Marker.class);
+
+            etTitle.setText(editingMarker.getTitle());
+            etDescription.setText(editingMarker.getDescription());
+            Glide
+                .with(AddMarkerActivity.this)
+                .load(Uri.parse(editingMarker.getMarkerImg().get(Marker.KEY_URI).toString()))
+                .into(ivReferenceImage);
+            tvSelectedAugmentedObject.setText(editingMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
+
+            if (editingMarker.getLocation() != null) {
+              rbAddLocation.setChecked(true);
+              rbAddLocation.setSelected(true);
+
+              btnOpenMaps.setVisibility(View.VISIBLE);
+
+              markerLoc = new LatLng((double) editingMarker.getLocation().get(Marker.KEY_LATITUDE), (double) editingMarker.getLocation().get(Marker.KEY_LONGITUDE));
+            }
+          })
+          .addOnFailureListener(e -> Log.i(TAG, "Could not retrieved editing marker document", e));
+    }
+
     btnFindReferenceImg.setOnClickListener(v -> openFileChooser(v));
 
     btnFindAugmentedObject.setOnClickListener(v -> openFileChooser(v));
 
-    btnSubmit.setOnClickListener(v -> addMarkerDocument());
+    btnSubmit.setOnClickListener(v -> {
+      if(getCallingActivity().getClassName().equals(getString(R.string.marker_details_activity))) {
+
+      } else {
+        addMarkerDocument();
+      }
+    });
 
     rbAddLocation.setOnClickListener(v -> {
       if (!rbAddLocation.isSelected()) {
