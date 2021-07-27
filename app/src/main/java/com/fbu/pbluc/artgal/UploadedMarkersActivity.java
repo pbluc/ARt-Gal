@@ -1,6 +1,5 @@
 package com.fbu.pbluc.artgal;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -8,18 +7,16 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -27,13 +24,12 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
+public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener, MarkersAdapter.ListItemLongClickListener {
 
   private static final String TAG = "UploadedMarkersActivity";
 
@@ -77,7 +73,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     // Initialize markers
     markers = new CopyOnWriteArrayList<>();
     // Create adapter
-    adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
+    adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this, this);
     // Attach the adapter to the recyclerview to populate items
     rvMarkers.setAdapter(adapter);
     LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
@@ -254,5 +250,12 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   public void onBackPressed() {
     Intent intent = new Intent(this, MainActivity.class);
     startActivity(intent);
+  }
+
+  @Override
+  public void onListItemLongClick(int position, View view) {
+    Marker longClickedMarker = markers.get(position);
+    longClickedMarker.setSelected(!longClickedMarker.isSelected());
+    view.setBackgroundColor(longClickedMarker.isSelected() ? Color.GRAY : Color.BLACK);
   }
 }

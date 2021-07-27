@@ -1,24 +1,16 @@
 package com.fbu.pbluc.artgal.adapters;
 
 import android.content.Context;
-import android.net.Uri;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.R;
 import com.fbu.pbluc.artgal.models.Marker;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 
 import java.util.List;
 
@@ -28,11 +20,13 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
   private Context mContext;
 
   final private ListItemClickListener mOnClickListener;
+  final private ListItemLongClickListener mOnLongClickListener;
 
-  public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener) {
+  public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener, ListItemLongClickListener mOnLongClickListener) {
     this.mMarkers = mMarkers;
     this.mContext = mContext;
     this.mOnClickListener = onClickListener;
+    this.mOnLongClickListener = mOnLongClickListener;
   }
 
   @NonNull
@@ -65,7 +59,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     notifyDataSetChanged();
   }
 
-  public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+  public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
 
     private TextView tvTitle;
     private TextView tvDescription;
@@ -81,6 +75,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
 
       itemView.setOnClickListener(this);
+      itemView.setOnLongClickListener(this);
     }
 
     public void bind(Marker marker) {
@@ -99,9 +94,24 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
           break;
       }
     }
+
+    @Override
+    public boolean onLongClick(View view) {
+      int position = getAdapterPosition();
+      switch (view.getId()) {
+        default:
+          mOnLongClickListener.onListItemLongClick(position, view);
+          break;
+      }
+      return true;
+    }
   }
 
   public interface ListItemClickListener {
     void onListItemClick(int position);
+  }
+
+  public interface ListItemLongClickListener {
+    void onListItemLongClick(int position, View view);
   }
 }

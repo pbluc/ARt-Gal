@@ -48,6 +48,7 @@ public class Marker {
   private Map<String, Object> location;
   private Object createdAt;
   private Object updatedAt;
+  private boolean isSelected = false;
 
   public Marker() {
   }
@@ -114,6 +115,14 @@ public class Marker {
 
   public void setUpdatedAt(Object updatedAt) {
     this.updatedAt = updatedAt;
+  }
+
+  public boolean isSelected() {
+    return isSelected;
+  }
+
+  public void setSelected(boolean selected) {
+    isSelected = selected;
   }
 
   @NonNull
