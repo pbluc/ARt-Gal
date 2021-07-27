@@ -130,7 +130,7 @@ public class AddMarkerActivity extends AppCompatActivity {
                 .into(ivReferenceImage);
             tvSelectedAugmentedObject.setText(editingMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
 
-            if (editingMarker.getLocation() != null) {
+            if (editingMarker.getLocation() != null && editingMarker.getLocation().size() != 0) {
               rbAddLocation.setChecked(true);
               rbAddLocation.setSelected(true);
 
@@ -207,8 +207,9 @@ public class AddMarkerActivity extends AppCompatActivity {
       editingMarker.setAugmentedObj(augmentedObj);
     }
 
-    Map<String, Object> location = new HashMap<>();
+    Map<String, Object> location = null;
     if (markerLoc != null && rbAddLocation.isChecked() && rbAddLocation.isSelected()) {
+      location = new HashMap<>();
       location.put(Marker.KEY_LATITUDE, markerLoc.latitude);
       location.put(Marker.KEY_LONGITUDE, markerLoc.longitude);
     }
