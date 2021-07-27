@@ -3,6 +3,7 @@ package com.fbu.pbluc.artgal;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.app.AppOpsManager;
 import android.content.Intent;
 import android.database.Cursor;
@@ -78,6 +79,11 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   private LatLng markerLoc;
 
+  private Marker editingMarker;
+
+  private String userUidEditingMarker;
+  private String markerUidEditingMarker;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -101,8 +107,8 @@ public class AddMarkerActivity extends AppCompatActivity {
     tvSelectedAugmentedObject = findViewById(R.id.tvSelectedAugmentedObject);
     rbAddLocation = findViewById(R.id.rbAddLocation);
 
-    String userUidEditingMarker = getIntent().getStringExtra(getString(R.string.user_uid_editing_marker));
-    String markerUidEditingMarker = getIntent().getStringExtra(getString(R.string.marker_uid_editing_marker));
+    userUidEditingMarker = getIntent().getStringExtra(getString(R.string.user_uid_editing_marker));
+    markerUidEditingMarker = getIntent().getStringExtra(getString(R.string.marker_uid_editing_marker));
 
     if (userUidEditingMarker != null && markerUidEditingMarker != null) {
       editingMarkerRef = firebaseFirestore
@@ -114,7 +120,7 @@ public class AddMarkerActivity extends AppCompatActivity {
       editingMarkerRef
           .get()
           .addOnSuccessListener(documentSnapshot -> {
-            Marker editingMarker = documentSnapshot.toObject(Marker.class);
+            editingMarker = documentSnapshot.toObject(Marker.class);
 
             etTitle.setText(editingMarker.getTitle());
             etDescription.setText(editingMarker.getDescription());
@@ -141,8 +147,8 @@ public class AddMarkerActivity extends AppCompatActivity {
     btnFindAugmentedObject.setOnClickListener(v -> openFileChooser(v));
 
     btnSubmit.setOnClickListener(v -> {
-      if(getCallingActivity().getClassName().equals(getString(R.string.marker_details_activity))) {
-
+      if (getCallingActivity().getClassName().equals(getString(R.string.marker_details_activity))) {
+        updateCurrentMarkerDocument();
       } else {
         addMarkerDocument();
       }
@@ -169,6 +175,184 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   }
 
+  private void updateCurrentMarkerDocument() {
+    String title = etTitle.getText().toString().trim();
+    String description = etDescription.getText().toString().trim();
+
+    if (title.isEmpty() || description.isEmpty() || (markerLoc == null && rbAddLocation.isChecked() && rbAddLocation.isSelected())) {
+      Toast.makeText(this, "One more fields empty!", Toast.LENGTH_LONG).show();
+      return;
+    }
+
+    editingMarker.setTitle(title);
+    editingMarker.setDescription(description);
+
+    String fileNamePrefix = currentUser.getUid() + "_" + markerUidEditingMarker;
+
+    String previousReferenceObjFileName = editingMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString();
+    if (referenceImgUri != null) {
+      Map<String, Object> markerImg = new HashMap<>();
+      markerImg.put(Marker.KEY_URI, "");
+      markerImg.put(Marker.KEY_FILENAME, fileNamePrefix + getFileName(referenceImgUri));
+
+      editingMarker.setMarkerImg(markerImg);
+    }
+
+    String previousAugmentedObjFileName = editingMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+    if (augmentedObjUri != null) {
+      Map<String, Object> augmentedObj = new HashMap<>();
+      augmentedObj.put(Marker.KEY_URI, augmentedObjUri.toString());
+      augmentedObj.put(Marker.KEY_FILENAME, fileNamePrefix + getFileName(augmentedObjUri));
+
+      editingMarker.setAugmentedObj(augmentedObj);
+    }
+
+    Map<String, Object> location = new HashMap<>();
+    if (markerLoc != null && rbAddLocation.isChecked() && rbAddLocation.isSelected()) {
+      location.put(Marker.KEY_LATITUDE, markerLoc.latitude);
+      location.put(Marker.KEY_LONGITUDE, markerLoc.longitude);
+    }
+    editingMarker.setLocation(location);
+
+    editingMarkerRef
+        .set(editingMarker)
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            if (augmentedObjUri != null && referenceImgUri != null) {
+              // Both augmented object file and reference images need to be updated
+              updateExistingFileInStorage(
+                  augmentedObjUri,
+                  previousAugmentedObjFileName,
+                  editingMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString(),
+                  getString(R.string.augmented_object_ref));
+
+              updateExistingFileInStorage(
+                  referenceImgUri,
+                  previousReferenceObjFileName,
+                  editingMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString(),
+                  getString(R.string.reference_images_ref));
+
+            } else if (augmentedObjUri != null || referenceImgUri != null) {
+              // Either the augmented object file or reference images need to be updated
+              if (augmentedObjUri != null) {
+                updateExistingFileInStorage(
+                    augmentedObjUri,
+                    previousAugmentedObjFileName,
+                    editingMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString(),
+                    getString(R.string.augmented_object_ref));
+              } else {
+                updateExistingFileInStorage(
+                    referenceImgUri,
+                    previousReferenceObjFileName,
+                    editingMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString(),
+                    getString(R.string.reference_images_ref));
+              }
+            } else {
+              // User did not change augmented object file nor reference image
+              updateUpdatedAtField(editingMarker.getUser(), null);
+            }
+          } else {
+            Log.e(TAG, "onFailure: Could not update existing marker document", task.getException());
+          }
+        });
+  }
+
+  private void updateUpdatedAtField(DocumentReference currentUserDocEditingMarker, String updatedReferenceImgFileName) {
+    Object newUpdateDateTime = FieldValue.serverTimestamp();
+
+    if (updatedReferenceImgFileName != null) { // Update fields updatedAt and markerImg.uri
+      // Get the uri of updated reference image file from storage
+      storageReference.child(getString(R.string.reference_images_ref) + updatedReferenceImgFileName)
+          .getDownloadUrl()
+          .addOnSuccessListener(uri -> {
+            String updatedReferenceImageUriString = uri.toString();
+
+            // Update in user document
+            currentUserDocEditingMarker
+                .update(Marker.KEY_UPDATED_AT, newUpdateDateTime)
+                .addOnSuccessListener(unused -> {
+                  // Update in marker document
+                  currentUserDocEditingMarker
+                      .collection(Marker.KEY_UPLOADED_MARKERS)
+                      .document(markerUidEditingMarker)
+                      .update(
+                          Marker.KEY_UPDATED_AT, newUpdateDateTime,
+                          Marker.KEY_MARKER_IMG + "." + Marker.KEY_URI, updatedReferenceImageUriString
+                      )
+                      .addOnSuccessListener(unused12 -> {
+                        editingMarker.setUpdatedAt(newUpdateDateTime);
+
+                        Map<String, Object> updatedMarkerImg = editingMarker.getMarkerImg();
+                        updatedMarkerImg.put(Marker.KEY_FILENAME, updatedReferenceImgFileName);
+                        updatedMarkerImg.put(Marker.KEY_URI, updatedReferenceImageUriString);
+                        editingMarker.setMarkerImg(updatedMarkerImg);
+
+                        goToMarkerDetailsActivity();
+                      })
+                      .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not update field updatedAt for marker document", e));
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not update field updatedAt for user document", e));
+          })
+          .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not get uri of updated reference image", e));
+    } else { // Update fields updatedAt
+      // Update in user document
+      currentUserDocEditingMarker
+          .update(Marker.KEY_UPDATED_AT, newUpdateDateTime)
+          .addOnSuccessListener(unused -> {
+            // Update in marker document
+            currentUserDocEditingMarker
+                .collection(Marker.KEY_UPLOADED_MARKERS)
+                .document(markerUidEditingMarker)
+                .update(Marker.KEY_UPDATED_AT, newUpdateDateTime)
+                .addOnSuccessListener(unused1 -> {
+                  editingMarker.setUpdatedAt(newUpdateDateTime);
+
+                  goToMarkerDetailsActivity();
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not update field updatedAt for marker document", e));
+          })
+          .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not update field updatedAt for user document", e));
+    }
+  }
+
+  private void goToMarkerDetailsActivity() {
+    Intent returnIntent = new Intent();
+    setResult(Activity.RESULT_OK, returnIntent);
+
+    Toast.makeText(this, "Successfully updated existing marker!", Toast.LENGTH_SHORT).show();
+
+    finish();
+  }
+
+  private void updateExistingFileInStorage(Uri updatedUri, String previousFileName, String updatedFileName, String storageReferenceFolder) {
+    StorageReference updateReference = storageReference.child(storageReferenceFolder);
+
+    // Delete existing file from storage
+    updateReference
+        .child(previousFileName)
+        .delete()
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            // Add updated file to storage
+            updateReference
+                .child(updatedFileName)
+                .putFile(updatedUri)
+                .addOnSuccessListener(taskSnapshot -> {
+                  // Update field updatedAt and if referenceImage was updated, update markerImg.uri in Firestore
+                  if (storageReferenceFolder.equals(getString(R.string.reference_images_ref))) {
+                    updateUpdatedAtField(editingMarker.getUser(), updatedFileName);
+                  } else {
+                    updateUpdatedAtField(editingMarker.getUser(), null);
+                  }
+                })
+                .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not upload updated uri to Storage", e));
+          } else {
+            Log.i(TAG, "onDelete: Could not delete previous file from storage", task.getException());
+            // TODO: Rollback updates made to document
+          }
+        });
+  }
+
   private void addMarkerDocument() {
 
     String title = etTitle.getText().toString().trim();
@@ -184,7 +368,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     augmentedObj.put(Marker.KEY_URI, augmentedObjUri.toString());
     augmentedObj.put(Marker.KEY_FILENAME, currentUser.getUid() + getFileName(augmentedObjUri));
 
-    if (!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) {
+    if (!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) { // TODO: Complete check for marker location fields
       Marker marker = new Marker();
       marker.setTitle(title);
       marker.setDescription(description);
