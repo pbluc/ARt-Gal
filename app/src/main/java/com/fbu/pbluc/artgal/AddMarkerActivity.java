@@ -551,68 +551,52 @@ public class AddMarkerActivity extends AppCompatActivity {
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
-    switch (requestCode) {
-      case REFERENCE_IMG_REQUEST_CODE:
-        // If the file selection was successful
-        if (resultCode == RESULT_OK) {
-          if (data != null) {
-            // Get the URI of the selected file
-            referenceImgUri = data.getData();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-              this.getContentResolver().takePersistableUriPermission(referenceImgUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            }
-            Log.i(TAG, "Uri: " + referenceImgUri.toString());
-            try {
-              // Set selected image to imageView
-              Glide.with(this).load(referenceImgUri).into(ivReferenceImage);
 
-            } catch (Exception e) {
-              Log.e(TAG, "File select error", e);
-            }
-          } else {
-            return;
+    if(resultCode == RESULT_OK && data != null) {
+      switch (requestCode) {
+        case REFERENCE_IMG_REQUEST_CODE:
+          // Get the URI of the selected file
+          referenceImgUri = data.getData();
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            this.getContentResolver().takePersistableUriPermission(referenceImgUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
           }
-        }
-        break;
-      case AUGMENTED_OBJ_REQUEST_CODE:
-        if (resultCode == RESULT_OK) {
-          if (data != null) {
-            // Get the URI of the selected file
-            augmentedObjUri = data.getData();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-              this.getContentResolver().takePersistableUriPermission(augmentedObjUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
-            }
-            Log.i(TAG, "Uri: " + augmentedObjUri.toString());
-            try {
-              // Set selected augmented object file name to TextView
-              tvSelectedAugmentedObject.setText("Selected: " + getFileName(augmentedObjUri));
+          Log.i(TAG, "Uri: " + referenceImgUri.toString());
+          try {
+            // Set selected image to imageView
+            Glide.with(this).load(referenceImgUri).into(ivReferenceImage);
 
-            } catch (Exception e) {
-              Log.e(TAG, "File select error", e);
-            }
-          } else {
-            return;
+          } catch (Exception e) {
+            Log.e(TAG, "File select error", e);
           }
-        }
-        break;
-      case NEW_MARKER_LOC_REQUEST_CODE:
-        if (resultCode == RESULT_OK) {
-          if (data != null) {
-            double[] latLng = data.getDoubleArrayExtra(getString(R.string.new_marker_latlng));
+          break;
+        case AUGMENTED_OBJ_REQUEST_CODE:
+          // Get the URI of the selected file
+          augmentedObjUri = data.getData();
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            this.getContentResolver().takePersistableUriPermission(augmentedObjUri, Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+          }
+          Log.i(TAG, "Uri: " + augmentedObjUri.toString());
+          try {
+            // Set selected augmented object file name to TextView
+            tvSelectedAugmentedObject.setText("Selected: " + getFileName(augmentedObjUri));
 
-            if (latLng[0] != 0 && latLng[1] != 0) {
-              markerLoc = new LatLng(latLng[0], latLng[1]);
-              Toast.makeText(AddMarkerActivity.this, "Got location!", Toast.LENGTH_SHORT).show();
-            } else {
-              Log.e(TAG, "Invalid latitude and longitude values");
-            }
-          } else {
-            return;
+          } catch (Exception e) {
+            Log.e(TAG, "File select error", e);
           }
-        }
-        break;
-      default:
-        break;
+          break;
+        case NEW_MARKER_LOC_REQUEST_CODE:
+          double[] latLng = data.getDoubleArrayExtra(getString(R.string.new_marker_latlng));
+
+          if (latLng[0] != 0 && latLng[1] != 0) {
+            markerLoc = new LatLng(latLng[0], latLng[1]);
+            Toast.makeText(AddMarkerActivity.this, "Got location!", Toast.LENGTH_SHORT).show();
+          } else {
+            Log.e(TAG, "Invalid latitude and longitude values");
+          }
+          break;
+        default:
+          break;
+      }
     }
   }
 

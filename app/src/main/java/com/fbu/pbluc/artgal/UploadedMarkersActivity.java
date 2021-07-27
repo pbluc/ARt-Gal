@@ -38,7 +38,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   private static final String TAG = "UploadedMarkersActivity";
 
   private static final int NEW_MARKER_REQUEST_CODE = 20;
-  private static final int DELETE_MARKER_CODE = 30;
+  private static final int GO_TO_MARKER_DETAILS_REQUEST_CODE = 30;
   public final int QUERY_LIMIT = 8;
 
   private RecyclerView rvMarkers;
@@ -103,7 +103,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   private void queryMarkers() {
     // Create a query against the collection
-    Task<QuerySnapshot> query = markersRef
+    markersRef
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
         .limit(QUERY_LIMIT)
         .get()
@@ -125,7 +125,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   private void loadNextDataFromDatabase() {
     // Send the request
-    Task<QuerySnapshot> query = markersRef
+    markersRef
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
         .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 1).getCreatedAt())
         .limit(QUERY_LIMIT)
@@ -151,7 +151,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   }
 
   private void fetchUploadedMarkersAsync() {
-    Task<QuerySnapshot> query = markersRef
+    markersRef
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
         .limit(QUERY_LIMIT)
         .get()
@@ -211,22 +211,26 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                 }
               });
           break;
-        case DELETE_MARKER_CODE:
-          String deletedMarkerUid = data.getStringExtra(getString(R.string.deleted_marker_uid));
-          Log.i(TAG, "deletedMarkerUid: " + deletedMarkerUid);
+        case GO_TO_MARKER_DETAILS_REQUEST_CODE:
+          if (getIntent().getBooleanExtra(getString(R.string.edited_viewed_marker), false) == false) {
+            String deletedMarkerUid = data.getStringExtra(getString(R.string.deleted_marker_uid));
+            Log.i(TAG, "deletedMarkerUid: " + deletedMarkerUid);
 
-          int index = 0;
-          for (Marker m : markers) {
-            if (m.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49).equals(deletedMarkerUid)) {
-              markers.remove(m);
-              adapter.notifyItemRemoved(index);
-              Log.i(TAG, "removed marker at index: " + index);
+            int index = 0;
+            for (Marker m : markers) {
+              if (m.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49).equals(deletedMarkerUid)) {
+                markers.remove(m);
+                adapter.notifyItemRemoved(index);
+                Log.i(TAG, "removed marker at index: " + index);
+              }
+              index += 1;
             }
-            index += 1;
-          }
 
-          Log.i(TAG, "Markers: " + markers.toString());
-          break;
+            Log.i(TAG, "Markers: " + markers.toString());
+            break;
+          } else {
+            fetchUploadedMarkersAsync();
+          }
         default:
           break;
       }
@@ -243,6 +247,12 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     intent.putExtra(getString(R.string.user_marker_uid), clickedMarker.getUser().getId());
     intent.putExtra(getString(R.string.clicked_marker_uid), clickedMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49));
 
-    startActivityForResult(intent, DELETE_MARKER_CODE);
+    startActivityForResult(intent, GO_TO_MARKER_DETAILS_REQUEST_CODE);
+  }
+
+  @Override
+  public void onBackPressed() {
+    Intent intent = new Intent(this, MainActivity.class);
+    startActivity(intent);
   }
 }

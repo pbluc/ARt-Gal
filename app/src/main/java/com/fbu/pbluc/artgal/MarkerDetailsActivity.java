@@ -57,7 +57,6 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private StorageReference markerImgReference;
   private StorageReference augmentedObjReference;
 
-
   private DocumentReference markerRef;
 
   private TextView tvTitle;
@@ -107,6 +106,28 @@ public class MarkerDetailsActivity extends AppCompatActivity {
         .collection(Marker.KEY_UPLOADED_MARKERS)
         .document(markerUid);
 
+    setUpMarkerDetailsLayout();
+
+    if (userUid.equals(currentUser.getUid())) {
+      deleteMarkerLayoutContainer.setVisibility(View.VISIBLE);
+      editMarkerLayoutContainer.setVisibility(View.VISIBLE);
+
+      deleteMarkerLayoutContainer.setOnClickListener(v -> deleteMarkerFilesFromStorage());
+      editMarkerLayoutContainer.setOnClickListener(v -> editCurrentMarker(userUid, markerUid));
+    } else {
+      deleteMarkerLayoutContainer.setVisibility(View.GONE);
+      editMarkerLayoutContainer.setVisibility(View.GONE);
+    }
+
+    ivDownloadImgUrl.setOnClickListener(v -> {
+      ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+      ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+
+      saveImageToGallery();
+    });
+  }
+
+  private void setUpMarkerDetailsLayout() {
     markerRef
         .get()
         .addOnSuccessListener(documentSnapshot -> {
@@ -145,31 +166,8 @@ public class MarkerDetailsActivity extends AppCompatActivity {
                 Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
                 Glide.with(MarkerDetailsActivity.this).load(uri).into(ivOriginalReferenceImageMedia);
               })
-              .addOnFailureListener(new OnFailureListener() {
-                @Override
-                public void onFailure(@NonNull Exception e) {
-                  Log.e(TAG, "Could not get download url of marker img", e);
-                }
-              });
+              .addOnFailureListener(e -> Log.e(TAG, "Could not get download url of marker img", e));
         });
-
-    if (userUid.equals(currentUser.getUid())) {
-      deleteMarkerLayoutContainer.setVisibility(View.VISIBLE);
-      editMarkerLayoutContainer.setVisibility(View.VISIBLE);
-
-      deleteMarkerLayoutContainer.setOnClickListener(v -> deleteMarkerFilesFromStorage());
-      editMarkerLayoutContainer.setOnClickListener(v -> editCurrentMarker(userUid, markerUid));
-    } else {
-      deleteMarkerLayoutContainer.setVisibility(View.GONE);
-      editMarkerLayoutContainer.setVisibility(View.GONE);
-    }
-
-    ivDownloadImgUrl.setOnClickListener(v -> {
-      ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-      ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
-
-      saveImageToGallery();
-    });
   }
 
   private void editCurrentMarker(String userUid, String markerUid) {
@@ -182,6 +180,25 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   @Override
   protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
     super.onActivityResult(requestCode, resultCode, data);
+    if (resultCode == RESULT_OK && data != null) {
+      switch (requestCode) {
+        case EDIT_CURRENT_MARKER_REQUEST_CODE:
+          setUpMarkerDetailsLayout();
+
+          break;
+        default:
+          break;
+      }
+    }
+  }
+
+  @Override
+  public void onBackPressed() {
+    Intent i = new Intent(MarkerDetailsActivity.this, UploadedMarkersActivity.class);
+    i.putExtra(getString(R.string.edited_viewed_marker), true);
+    setResult(RESULT_OK, i);
+    startActivity(i);
+    finish();
   }
 
   private void deleteMarkerFilesFromStorage() {
@@ -218,6 +235,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
   private void goToUploadedMarkersActivity(String deletedMarkerId) {
     Intent i = new Intent();
+    i.putExtra(getString(R.string.deleted_marker_uid), deletedMarkerId);
     i.putExtra(getString(R.string.deleted_marker_uid), deletedMarkerId);
     setResult(RESULT_OK, i);
     finish();

@@ -46,4 +46,5 @@
     <string name="marker_details_activity">com.fbu.pbluc.artgal.MarkerDetailsActivity</string>
     <string name="user_uid_editing_marker">userUidFromEditingMarker</string>
     <string name="marker_uid_editing_marker">currentEditingMarkerUid</string>
+    <string name="edited_viewed_marker">editedViewedMarker</string>
 </resources>
