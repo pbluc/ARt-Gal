@@ -92,19 +92,9 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
       }
     };
 
-    swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-      @Override
-      public void onRefresh() {
-        fetchUploadedMarkersAsync();
-      }
-    });
+    swipeContainer.setOnRefreshListener(() -> fetchUploadedMarkersAsync());
 
-    ivAddMarker.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        goAddMarkerActivity();
-      }
-    });
+    ivAddMarker.setOnClickListener(v -> goToAddMarkerActivity());
 
     rvMarkers.addOnScrollListener(scrollListener);
 
@@ -117,21 +107,18 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
         .limit(QUERY_LIMIT)
         .get()
-        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-          @Override
-          public void onComplete(@NonNull Task<QuerySnapshot> task) {
-            if (task.isSuccessful()) {
-              List<Marker> resultMarkers = new ArrayList<>();
-              for (QueryDocumentSnapshot document : task.getResult()) {
-                Marker resultMarker = document.toObject(Marker.class);
-                resultMarkers.add(resultMarker);
-              }
-              markers.addAll(resultMarkers);
-              adapter.notifyDataSetChanged();
-              Log.i(TAG, "markers after query: " + markers.toString());
-            } else {
-              Log.e(TAG, "Error getting marker documents", task.getException());
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            List<Marker> resultMarkers = new ArrayList<>();
+            for (QueryDocumentSnapshot document : task.getResult()) {
+              Marker resultMarker = document.toObject(Marker.class);
+              resultMarkers.add(resultMarker);
             }
+            markers.addAll(resultMarkers);
+            adapter.notifyDataSetChanged();
+            Log.i(TAG, "markers after query: " + markers.toString());
+          } else {
+            Log.e(TAG, "Error getting marker documents", task.getException());
           }
         });
   }
@@ -143,25 +130,22 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 1).getCreatedAt())
         .limit(QUERY_LIMIT)
         .get()
-        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-          @Override
-          public void onComplete(@NonNull Task<QuerySnapshot> task) {
-            if (task.isSuccessful()) {
-              // Deserialize and construct new model objects from the query response
-              List<Marker> resultMarkers = new ArrayList<>();
-              for (QueryDocumentSnapshot document : task.getResult()) {
-                Marker resultMarker = document.toObject(Marker.class);
-                resultMarkers.add(resultMarker);
-              }
-              int positionInserted = markers.size();
-              // Append the new data objects to the existing set of items inside the array of items
-              markers.addAll(resultMarkers);
-              // Notify the adapter of the new items made with 'notifyItemRangeInserted()'
-              adapter.notifyItemRangeInserted(positionInserted, resultMarkers.size());
-              Log.i(TAG, "markers after scrolling: " + markers.toString());
-            } else {
-              Log.e(TAG, "Error getting marker documents", task.getException());
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            // Deserialize and construct new model objects from the query response
+            List<Marker> resultMarkers = new ArrayList<>();
+            for (QueryDocumentSnapshot document : task.getResult()) {
+              Marker resultMarker = document.toObject(Marker.class);
+              resultMarkers.add(resultMarker);
             }
+            int positionInserted = markers.size();
+            // Append the new data objects to the existing set of items inside the array of items
+            markers.addAll(resultMarkers);
+            // Notify the adapter of the new items made with 'notifyItemRangeInserted()'
+            adapter.notifyItemRangeInserted(positionInserted, resultMarkers.size());
+            Log.i(TAG, "markers after scrolling: " + markers.toString());
+          } else {
+            Log.e(TAG, "Error getting marker documents", task.getException());
           }
         });
   }
@@ -171,30 +155,27 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
         .limit(QUERY_LIMIT)
         .get()
-        .addOnCompleteListener(new OnCompleteListener<QuerySnapshot>() {
-          @Override
-          public void onComplete(@NonNull Task<QuerySnapshot> task) {
-            if (task.isSuccessful()) {
-              List<Marker> resultMarkers = new ArrayList<>();
-              for (QueryDocumentSnapshot document : task.getResult()) {
-                Marker resultMarker = document.toObject(Marker.class);
-                resultMarkers.add(resultMarker);
-              }
-              adapter.clear();
-              adapter.addAll(resultMarkers);
-              scrollListener.resetState();
-              Log.i(TAG, "markers after refresh: " + markers.toString());
-            } else {
-              Log.e(TAG, "Error getting marker documents", task.getException());
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            List<Marker> resultMarkers = new ArrayList<>();
+            for (QueryDocumentSnapshot document : task.getResult()) {
+              Marker resultMarker = document.toObject(Marker.class);
+              resultMarkers.add(resultMarker);
             }
-            swipeContainer.setRefreshing(false);
+            adapter.clear();
+            adapter.addAll(resultMarkers);
+            scrollListener.resetState();
+            Log.i(TAG, "markers after refresh: " + markers.toString());
+          } else {
+            Log.e(TAG, "Error getting marker documents", task.getException());
           }
+          swipeContainer.setRefreshing(false);
         });
   }
 
-  private void goAddMarkerActivity() {
+  private void goToAddMarkerActivity() {
     Intent intent = new Intent(UploadedMarkersActivity.this, AddMarkerActivity.class);
-    intent.putExtra("flag", "UploadedMarkers");
+    intent.putExtra(getString(R.string.flag), getString(R.string.uploaded_markers_activity));
     startActivityForResult(intent, NEW_MARKER_REQUEST_CODE);
   }
 
@@ -204,37 +185,34 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
       switch (requestCode) {
         case NEW_MARKER_REQUEST_CODE:
           // Get data from the intent (marker)
-          String newMarkerUid = data.getStringExtra("newMarkerUid");
+          String newMarkerUid = data.getStringExtra(getString(R.string.new_marker_uid));
           Log.i(TAG, "newMarkerUid: " + newMarkerUid);
           markersRef
               .document(newMarkerUid)
               .get()
-              .addOnCompleteListener(new OnCompleteListener<DocumentSnapshot>() {
-                @Override
-                public void onComplete(@NonNull Task<DocumentSnapshot> task) {
-                  if (task.isSuccessful()) {
-                    DocumentSnapshot documentSnapshot = task.getResult();
-                    if (documentSnapshot.exists()) {
-                      Marker newMarker = documentSnapshot.toObject(Marker.class);
+              .addOnCompleteListener(task -> {
+                if (task.isSuccessful()) {
+                  DocumentSnapshot documentSnapshot = task.getResult();
+                  if (documentSnapshot.exists()) {
+                    Marker newMarker = documentSnapshot.toObject(Marker.class);
 
-                      // Update the recycler view with the marker
-                      // Modify data source of tweets
-                      markers.add(0, newMarker);
-                      // Update the adapter
-                      adapter.notifyItemInserted(0);
-                      rvMarkers.smoothScrollToPosition(0);
-                      Log.i(TAG, "Markers: " + markers.toString());
-                    } else {
-                      Log.e(TAG, "No such document");
-                    }
+                    // Update the recycler view with the marker
+                    // Modify data source of tweets
+                    markers.add(0, newMarker);
+                    // Update the adapter
+                    adapter.notifyItemInserted(0);
+                    rvMarkers.smoothScrollToPosition(0);
+                    Log.i(TAG, "Markers: " + markers.toString());
                   } else {
-                    Log.e(TAG, "get new marker document failed with ", task.getException());
+                    Log.e(TAG, "No such document");
                   }
+                } else {
+                  Log.e(TAG, "get new marker document failed with ", task.getException());
                 }
               });
           break;
         case DELETE_MARKER_CODE:
-          String deletedMarkerUid = data.getStringExtra("deletedMarkerUid");
+          String deletedMarkerUid = data.getStringExtra(getString(R.string.deleted_marker_uid));
           Log.i(TAG, "deletedMarkerUid: " + deletedMarkerUid);
 
           int index = 0;
@@ -262,8 +240,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     Marker clickedMarker = markers.get(position);
 
     Intent intent = new Intent(UploadedMarkersActivity.this, MarkerDetailsActivity.class);
-    intent.putExtra("userMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(0, 28));
-    intent.putExtra("clickedMarkerUid", clickedMarker.getMarkerImg().get("fileName").toString().substring(29, 49));
+    intent.putExtra(getString(R.string.user_marker_uid), clickedMarker.getUser().getId());
+    intent.putExtra(getString(R.string.clicked_marker_uid), clickedMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49));
 
     startActivityForResult(intent, DELETE_MARKER_CODE);
   }

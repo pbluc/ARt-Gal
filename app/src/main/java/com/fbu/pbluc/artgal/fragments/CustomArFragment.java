@@ -9,8 +9,6 @@ public class CustomArFragment extends ArFragment {
 
   private static final String TAG = "CustomArFragment";
 
-
-
   @Override
   protected Config getSessionConfiguration(Session session) {
 

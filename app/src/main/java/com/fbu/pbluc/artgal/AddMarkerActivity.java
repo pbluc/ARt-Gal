@@ -96,50 +96,29 @@ public class AddMarkerActivity extends AppCompatActivity {
     tvSelectedAugmentedObject = findViewById(R.id.tvSelectedAugmentedObject);
     rbAddLocation = findViewById(R.id.rbAddLocation);
 
-    btnFindReferenceImg.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        openFileChooser(v);
+    btnFindReferenceImg.setOnClickListener(v -> openFileChooser(v));
+
+    btnFindAugmentedObject.setOnClickListener(v -> openFileChooser(v));
+
+    btnSubmit.setOnClickListener(v -> addMarkerDocument());
+
+    rbAddLocation.setOnClickListener(v -> {
+      if (!rbAddLocation.isSelected()) {
+        rbAddLocation.setChecked(true);
+        rbAddLocation.setSelected(true);
+        // Reveal button to open map view
+        btnOpenMaps.setVisibility(View.VISIBLE);
+      } else {
+        rbAddLocation.setChecked(false);
+        rbAddLocation.setSelected(false);
+        // Hide button to open map view
+        btnOpenMaps.setVisibility(View.GONE);
       }
     });
 
-    btnFindAugmentedObject.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        openFileChooser(v);
-      }
-    });
-
-    btnSubmit.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        addMarkerDocument();
-      }
-    });
-
-    rbAddLocation.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        if(!rbAddLocation.isSelected()) {
-          rbAddLocation.setChecked(true);
-          rbAddLocation.setSelected(true);
-          // Reveal button to open map view
-          btnOpenMaps.setVisibility(View.VISIBLE);
-        } else {
-          rbAddLocation.setChecked(false);
-          rbAddLocation.setSelected(false);
-          // Hide button to open map view
-          btnOpenMaps.setVisibility(View.GONE);
-        }
-      }
-    });
-
-    btnOpenMaps.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        // Go to map view
-        goMarkerMapActivity();
-      }
+    btnOpenMaps.setOnClickListener(v -> {
+      // Go to map view
+      goToMarkerMapActivity();
     });
 
   }
@@ -179,20 +158,14 @@ public class AddMarkerActivity extends AppCompatActivity {
       currentUserDoc.
           collection(Marker.KEY_UPLOADED_MARKERS)
           .add(marker)
-          .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
-            @Override
-            public void onSuccess(DocumentReference documentReference) {
-              Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
+          .addOnSuccessListener(documentReference -> {
+            Log.i(TAG, "DocumentSnapshot written with ID: " + documentReference.getId());
 
-              uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId(), currentUserDoc, marker);
-            }
+            uploadFilesToStorage(referenceImgUri, augmentedObjUri, documentReference.getId(), currentUserDoc, marker);
           })
-          .addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
-              Log.e(TAG, "Error adding document", e);
-              return;
-            }
+          .addOnFailureListener(e -> {
+            Log.e(TAG, "Error adding document", e);
+            return;
           });
     } else {
       Toast.makeText(this, "One more fields empty!", Toast.LENGTH_LONG).show();
@@ -203,123 +176,98 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   private void uploadFilesToStorage(Uri referenceUri, Uri augmentedUri, String markerId, DocumentReference currentUserDoc, Marker marker) {
     // Create child references
-    referenceImagesReference = storageReference.child("referenceImages/" + currentUser.getUid() + "_" + markerId + getFileName(referenceImgUri));
-    augmentedObjReference = storageReference.child("augmentedObjects/" + currentUser.getUid() + "_" + markerId + getFileName(augmentedObjUri));
+    referenceImagesReference = storageReference.child(getString(R.string.reference_images_ref) + currentUser.getUid() + "_" + markerId + getFileName(referenceImgUri));
+    augmentedObjReference = storageReference.child(getString(R.string.augmented_object_ref) + currentUser.getUid() + "_" + markerId + getFileName(augmentedObjUri));
 
     referenceImagesReference
         .putFile(referenceUri)
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            // Handle unsuccessful uploads
-            Log.e(TAG, "Unable to upload reference image to storage", e);
-            // Files were not added to storage and must delete created marker document
-            deleteCreatedMarkerDocument(currentUserDoc, markerId);
-          }
+        .addOnFailureListener(e -> {
+          // Handle unsuccessful uploads
+          Log.e(TAG, "Unable to upload reference image to storage", e);
+          // Files were not added to storage and must delete created marker document
+          deleteCreatedMarkerDocument(currentUserDoc, markerId);
         })
-        .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-          @Override
-          public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-            augmentedObjReference
-                .putFile(augmentedUri)
-                .addOnFailureListener(new OnFailureListener() {
-                  @Override
-                  public void onFailure(@NonNull Exception e) {
-                    Log.e(TAG, "Unable to upload augmented object to storage", e);
-                    deleteCreatedMarkerDocument(currentUserDoc, markerId);
-                  }
-                })
-                .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
-                  @Override
-                  public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
-                    Log.i(TAG, "Both files were successfully added to storage");
-                    // Files were added to storage and update field updatedAt for user doc
-                    //  and rename file names of marker and augmented object in marker document
-                    //  as well as its updatedAt field.
-                    updateCreatedMarkerDocument(currentUserDoc, markerId, marker);
-                  }
-                });
-          }
-        });
+        .addOnSuccessListener(taskSnapshot -> augmentedObjReference
+            .putFile(augmentedUri)
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+                Log.e(TAG, "Unable to upload augmented object to storage", e);
+                deleteCreatedMarkerDocument(currentUserDoc, markerId);
+              }
+            })
+            .addOnSuccessListener(taskSnapshot1 -> {
+              Log.i(TAG, "Both files were successfully added to storage");
+              // Files were added to storage and update field updatedAt for user doc
+              //  and rename file names of marker and augmented object in marker document
+              //  as well as its updatedAt field.
+              updateCreatedMarkerDocument(currentUserDoc, markerId, marker);
+            }));
 
     etTitle.setText("");
     etDescription.setText("");
     ivReferenceImage.setImageResource(0);
-    tvSelectedAugmentedObject.setText("Only .glb assets");
+    tvSelectedAugmentedObject.setText(R.string.only_glb_assets);
   }
 
   private void updateCreatedMarkerDocument(DocumentReference currentUserDoc, String markerId, Marker marker) {
 
     referenceImagesReference
         .getDownloadUrl()
-        .addOnSuccessListener(new OnSuccessListener<Uri>() {
-          @Override
-          public void onSuccess(Uri uri) {
-            String updatedReferemceImageUriString = uri.toString();
+        .addOnSuccessListener(uri -> {
+          String updatedReferenceImageUriString = uri.toString();
 
-            Object newUpdateDateTime = FieldValue.serverTimestamp();
-            currentUserDoc
-                .update(Marker.KEY_UPDATED_AT, newUpdateDateTime)
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                  @Override
-                  public void onSuccess(Void unused) {
-                    String updatedReferenceImgFileName = currentUser.getUid() + "_" + markerId + getFileName(referenceImgUri);
-                    String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + markerId + getFileName(augmentedObjUri);
-                    currentUserDoc
-                        .collection(Marker.KEY_UPLOADED_MARKERS)
-                        .document(markerId)
-                        .update(
-                            Marker.KEY_AUGMENTED_OBJ + "." + Marker.KEY_FILENAME, updatedAugmentedObjectFileName,
-                            Marker.KEY_MARKER_IMG + "." + Marker.KEY_FILENAME, updatedReferenceImgFileName,
-                            Marker.KEY_MARKER_IMG + "." + Marker.KEY_URI, updatedReferemceImageUriString,
-                            Marker.KEY_UPDATED_AT, newUpdateDateTime
-                        )
-                        .addOnSuccessListener(new OnSuccessListener<Void>() {
-                          @Override
-                          public void onSuccess(Void unused) {
-                            Map<String, Object> updatedMarkerImg = marker.getMarkerImg();
-                            updatedMarkerImg.put(Marker.KEY_FILENAME, updatedReferenceImgFileName);
-                            updatedMarkerImg.put(Marker.KEY_URI, updatedReferemceImageUriString);
-                            marker.setMarkerImg(updatedMarkerImg);
+          Object newUpdateDateTime = FieldValue.serverTimestamp();
+          currentUserDoc
+              .update(Marker.KEY_UPDATED_AT, newUpdateDateTime)
+              .addOnSuccessListener(unused -> {
+                String updatedReferenceImgFileName = currentUser.getUid() + "_" + markerId + getFileName(referenceImgUri);
+                String updatedAugmentedObjectFileName = currentUser.getUid() + "_" + markerId + getFileName(augmentedObjUri);
+                currentUserDoc
+                    .collection(Marker.KEY_UPLOADED_MARKERS)
+                    .document(markerId)
+                    .update(
+                        Marker.KEY_AUGMENTED_OBJ + "." + Marker.KEY_FILENAME, updatedAugmentedObjectFileName,
+                        Marker.KEY_MARKER_IMG + "." + Marker.KEY_FILENAME, updatedReferenceImgFileName,
+                        Marker.KEY_MARKER_IMG + "." + Marker.KEY_URI, updatedReferenceImageUriString,
+                        Marker.KEY_UPDATED_AT, newUpdateDateTime
+                    )
+                    .addOnSuccessListener(unused1 -> {
+                      Map<String, Object> updatedMarkerImg = marker.getMarkerImg();
+                      updatedMarkerImg.put(Marker.KEY_FILENAME, updatedReferenceImgFileName);
+                      updatedMarkerImg.put(Marker.KEY_URI, updatedReferenceImageUriString);
+                      marker.setMarkerImg(updatedMarkerImg);
 
-                            Map<String, Object> updatedAugmentedObj = marker.getAugmentedObj();
-                            updatedAugmentedObj.put(Marker.KEY_FILENAME, updatedAugmentedObjectFileName);
-                            marker.setAugmentedObj(updatedAugmentedObj);
+                      Map<String, Object> updatedAugmentedObj = marker.getAugmentedObj();
+                      updatedAugmentedObj.put(Marker.KEY_FILENAME, updatedAugmentedObjectFileName);
+                      marker.setAugmentedObj(updatedAugmentedObj);
 
-                            Log.i(TAG, "Successfully updated both user and marker documents!");
+                      Log.i(TAG, "Successfully updated both user and marker documents!");
 
-                            Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
+                      Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
 
-                            String checkFlag = getIntent().getStringExtra("flag");
-                            Intent intent;
-                            if (checkFlag.equals("UploadedMarkers")) {
-                              // Came from UploadedMarkersActivity
-                              intent = new Intent();
-                              Log.i(TAG, "marker id to uploaded markers: " + markerId);
-                              intent.putExtra("newMarkerUid", markerId);
-                              setResult(RESULT_OK, intent);
-                            } else {
-                              intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
-                              startActivity(intent);
-                            }
-                            finish();
-                          }
-                        })
-                        .addOnFailureListener(new OnFailureListener() {
-                          @Override
-                          public void onFailure(@NonNull Exception e) {
-                            Log.e(TAG, "Error updating marker document", e);
-                          }
-                        });
-                  }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                  @Override
-                  public void onFailure(@NonNull Exception e) {
-                    Log.e(TAG, "Error updating user document", e);
-                  }
-                });
-          }
+                      String checkFlag = getIntent().getStringExtra(getString(R.string.flag));
+                      Intent intent;
+                      if (checkFlag.equals(getString(R.string.uploaded_markers_activity))) {
+                        // Came from UploadedMarkersActivity
+                        intent = new Intent();
+                        Log.i(TAG, "marker id to uploaded markers: " + markerId);
+                        intent.putExtra(getString(R.string.new_marker_uid), markerId);
+                        setResult(RESULT_OK, intent);
+                      } else {
+                        intent = new Intent(AddMarkerActivity.this, UploadedMarkersActivity.class);
+                        startActivity(intent);
+                      }
+                      finish();
+                    })
+                    .addOnFailureListener(new OnFailureListener() {
+                      @Override
+                      public void onFailure(@NonNull Exception e) {
+                        Log.e(TAG, "Error updating marker document", e);
+                      }
+                    });
+              })
+              .addOnFailureListener(e -> Log.e(TAG, "Error updating user document", e));
         })
         .addOnFailureListener(new OnFailureListener() {
           @Override
@@ -332,18 +280,8 @@ public class AddMarkerActivity extends AppCompatActivity {
   private void deleteCreatedMarkerDocument(DocumentReference currentUserDoc, String markerId) {
     currentUserDoc.collection(Marker.KEY_UPLOADED_MARKERS).document(markerId)
         .delete()
-        .addOnSuccessListener(new OnSuccessListener<Void>() {
-          @Override
-          public void onSuccess(Void unused) {
-            Log.i(TAG, "DocumentSnapshot successfully deleted!");
-          }
-        })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            Log.e(TAG, "Error deleting document", e);
-          }
-        });
+        .addOnSuccessListener(unused -> Log.i(TAG, "DocumentSnapshot successfully deleted!"))
+        .addOnFailureListener(e -> Log.e(TAG, "Error deleting document", e));
   }
 
 
@@ -353,7 +291,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     // Check if user is signed in (non-null) and update UI accordingly.
     FirebaseUser currentUser = firebaseAuth.getCurrentUser();
     if (currentUser == null) {
-      goLoginActivity();
+      goToLoginActivity();
     }
   }
 
@@ -365,13 +303,13 @@ public class AddMarkerActivity extends AppCompatActivity {
 
     switch (v.getId()) {
       case R.id.btnFindReferenceImg:
-        String[] referenceImgMimeTypes = {"image/jpeg", "image/png"};
-        intent.setType("image/*");
+        String[] referenceImgMimeTypes = {getString(R.string.mime_type_jpeg), getString(R.string.mime_type_png)};
+        intent.setType(getString(R.string.type_images));
         intent.putExtra(Intent.EXTRA_MIME_TYPES, referenceImgMimeTypes);
         startActivityForResult(intent, REFERENCE_IMG_REQUEST_CODE);
         break;
       case R.id.btnFindAugmentedObject:
-        intent.setType("application/octet-stream");
+        intent.setType(getString(R.string.type_3d_models));
         startActivityForResult(intent, AUGMENTED_OBJ_REQUEST_CODE);
         break;
       default:
@@ -427,11 +365,11 @@ public class AddMarkerActivity extends AppCompatActivity {
         }
         break;
       case NEW_MARKER_LOC_REQUEST_CODE:
-        if(resultCode == RESULT_OK) {
-          if(data != null) {
-            double[] latLng = data.getDoubleArrayExtra("newMarkerLatLng");
+        if (resultCode == RESULT_OK) {
+          if (data != null) {
+            double[] latLng = data.getDoubleArrayExtra(getString(R.string.new_marker_latlng));
 
-            if(latLng[0] != 0 && latLng[1] != 0) {
+            if (latLng[0] != 0 && latLng[1] != 0) {
               markerLoc = new LatLng(latLng[0], latLng[1]);
               Toast.makeText(AddMarkerActivity.this, "Got location!", Toast.LENGTH_SHORT).show();
             } else {
@@ -449,7 +387,7 @@ public class AddMarkerActivity extends AppCompatActivity {
 
   private String getFileName(Uri uri) {
     String result = null;
-    if (uri != null && uri.getScheme().equals("content")) {
+    if (uri != null && uri.getScheme().equals(getString(R.string.content))) {
       Cursor cursor = getContentResolver().query(uri, null, null, null, null);
       try {
         if (cursor != null && cursor.moveToFirst()) {
@@ -470,13 +408,13 @@ public class AddMarkerActivity extends AppCompatActivity {
     return result;
   }
 
-  private void goLoginActivity() {
+  private void goToLoginActivity() {
     Intent i = new Intent(this, LoginActivity.class);
     startActivity(i);
     finish();
   }
 
-  private void goMarkerMapActivity() {
+  private void goToMarkerMapActivity() {
     Intent i = new Intent(this, MarkerMapActivity.class);
     startActivityForResult(i, NEW_MARKER_LOC_REQUEST_CODE);
   }

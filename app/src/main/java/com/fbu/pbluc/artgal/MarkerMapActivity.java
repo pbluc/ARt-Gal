@@ -81,15 +81,12 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       mCurrentLocation = savedInstanceState.getParcelable(KEY_LOC);
     }
 
-    btnDoneSettingLoc.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        double[] latLng = {placedMarker.getPosition().latitude, placedMarker.getPosition().longitude};
-        Intent returnIntent = new Intent();
-        returnIntent.putExtra("newMarkerLatLng", latLng);
-        setResult(Activity.RESULT_OK, returnIntent);
-        finish();
-      }
+    btnDoneSettingLoc.setOnClickListener(v -> {
+      double[] latLng = {placedMarker.getPosition().latitude, placedMarker.getPosition().longitude};
+      Intent returnIntent = new Intent();
+      returnIntent.putExtra(getString(R.string.new_marker_latlng), latLng);
+      setResult(Activity.RESULT_OK, returnIntent);
+      finish();
     });
 
     setUpMapIfNeeded();
@@ -122,10 +119,10 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
 
       Intent returnIntent = new Intent();
-      if(getCallingActivity() != null) {
-        if(getCallingActivity().getClassName().equals("com.fbu.pbluc.artgal.MainActivity")) {
+      if (getCallingActivity() != null) {
+        if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
           addAllMarkersToMap();
-        } else if(getCallingActivity().getClassName().equals("com.fbu.pbluc.artgal.AddMarkerActivity")) {
+        } else if (getCallingActivity().getClassName().equals(getString(R.string.add_marker_activity))) {
           btnDoneSettingLoc.setVisibility(View.VISIBLE);
 
           map.setOnMapClickListener(placedLatLng -> {
@@ -139,7 +136,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
           });
 
           map.setOnMyLocationButtonClickListener(() -> {
-            if(placedMarker != null) {
+            if (placedMarker != null) {
               placedMarker.setPosition(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
             }
             return false;
@@ -157,7 +154,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         .whereNotEqualTo(Marker.KEY_LOCATION, null)
         .get()
         .addOnSuccessListener(queryDocumentSnapshots -> {
-          for(DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
+          for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
             Marker retrievedMarker = documentSnapshot.toObject(Marker.class);
 
             String title = retrievedMarker.getTitle();
@@ -177,12 +174,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
             Log.i(TAG, "Successfully added marker to map");
           }
         })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            Log.e(TAG, "Could not retrieve all markers", e);
-          }
-        });
+        .addOnFailureListener(e -> Log.e(TAG, "Could not retrieve all markers", e));
 
   }
 
@@ -201,22 +193,13 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
 
     FusedLocationProviderClient locationClient = getFusedLocationProviderClient(this);
     locationClient.getLastLocation()
-        .addOnSuccessListener(new OnSuccessListener<Location>() {
-          @Override
-          public void onSuccess(Location location) {
-            if (location != null) {
-              onLocationChanged(location);
-              displayLocation();
-            }
+        .addOnSuccessListener(location -> {
+          if (location != null) {
+            onLocationChanged(location);
+            displayLocation();
           }
         })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            Log.d("MapDemoActivity", "Error trying to get last GPS location");
-            e.printStackTrace();
-          }
-        });
+        .addOnFailureListener(e -> Log.e("MapDemoActivity", "Error trying to get last GPS location", e));
   }
 
   @NeedsPermission({Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION})

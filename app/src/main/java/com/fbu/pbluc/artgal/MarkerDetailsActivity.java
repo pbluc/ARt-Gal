@@ -93,8 +93,8 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     ivDownloadImgUrl = findViewById(R.id.ivDownloadImgUrl);
     deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
 
-    String userUid = getIntent().getStringExtra("userMarkerUid");
-    String markerUid = getIntent().getStringExtra("clickedMarkerUid");
+    String userUid = getIntent().getStringExtra(getString(R.string.user_marker_uid));
+    String markerUid = getIntent().getStringExtra(getString(R.string.clicked_marker_uid));
 
 
     markerRef = firebaseFirestore
@@ -105,87 +105,62 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
     markerRef
         .get()
-        .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-          @Override
-          public void onSuccess(DocumentSnapshot documentSnapshot) {
-            marker = documentSnapshot.toObject(Marker.class);
+        .addOnSuccessListener(documentSnapshot -> {
+          marker = documentSnapshot.toObject(Marker.class);
 
-            DocumentReference markerUser = marker.getUser();
+          DocumentReference markerUser = marker.getUser();
 
-            tvTitle.setText(marker.getTitle());
-            tvDescription.setText(marker.getDescription());
-            tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
-            tvCreatedAt.setText(marker.formattedCreatedAt());
+          tvTitle.setText(marker.getTitle());
+          tvDescription.setText(marker.getDescription());
+          tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
+          tvCreatedAt.setText(marker.formattedCreatedAt());
 
-            markerUser
-                .get()
-                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                  @Override
-                  public void onSuccess(DocumentSnapshot documentSnapshot) {
-                    User user = documentSnapshot.toObject(User.class);
-                    tvUserFullName.setText(user.getName().get(User.KEY_FIRST_NAME).toString() + " " + user.getName().get(User.KEY_LAST_NAME).toString());
-                    tvUsername.setText(user.getUsername());
-                  }
-                });
+          markerUser
+              .get()
+              .addOnSuccessListener(documentSnapshot1 -> {
+                User user = documentSnapshot1.toObject(User.class);
+                tvUserFullName.setText(user.getName().get(User.KEY_FIRST_NAME).toString() + " " + user.getName().get(User.KEY_LAST_NAME).toString());
+                tvUsername.setText(user.getUsername());
+              });
 
-            markerImgReference = storageReference.child("referenceImages/" + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
+          markerImgReference = storageReference.child(getString(R.string.reference_images_ref) + marker.getMarkerImg().get(Marker.KEY_FILENAME).toString());
 
-            // Check if the augmented object file exists in Firebase Storage
-            augmentedObjReference = storageReference.child("augmentedObjects/" + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
-            augmentedObjReference
-                .getDownloadUrl()
-                .addOnSuccessListener(new OnSuccessListener<Uri>() {
-                  @Override
-                  public void onSuccess(Uri uri) {
-                    Log.i(TAG, "Augmented object file found!");
-                  }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                  @Override
-                  public void onFailure(@NonNull Exception e) {
-                    // File not found
-                    Log.e(TAG, "Augmented object file not found", e);
-                  }
-                });
+          // Check if the augmented object file exists in Firebase Storage
+          augmentedObjReference = storageReference.child(getString(R.string.augmented_object_ref) + marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString());
+          augmentedObjReference
+              .getDownloadUrl()
+              .addOnSuccessListener(uri -> Log.i(TAG, "Augmented object file found!"))
+              .addOnFailureListener(e -> {
+                // File not found
+                Log.e(TAG, "Augmented object file not found", e);
+              });
 
-            markerImgReference
-                .getDownloadUrl()
-                .addOnSuccessListener(new OnSuccessListener<Uri>() {
-                  @Override
-                  public void onSuccess(Uri uri) {
-                    Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
-                    Glide.with(MarkerDetailsActivity.this).load(uri).into(ivOriginalReferenceImageMedia);
-                  }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                  @Override
-                  public void onFailure(@NonNull Exception e) {
-                    Log.e(TAG, "Could not get download url of marker img", e);
-                  }
-                });
-          }
+          markerImgReference
+              .getDownloadUrl()
+              .addOnSuccessListener(uri -> {
+                Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
+                Glide.with(MarkerDetailsActivity.this).load(uri).into(ivOriginalReferenceImageMedia);
+              })
+              .addOnFailureListener(new OnFailureListener() {
+                @Override
+                public void onFailure(@NonNull Exception e) {
+                  Log.e(TAG, "Could not get download url of marker img", e);
+                }
+              });
         });
 
     if (userUid.equals(currentUser.getUid())) {
       deleteMarkerLayoutContainer.setVisibility(View.VISIBLE);
-      deleteMarkerLayoutContainer.setOnClickListener(new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          deleteMarkerFilesFromStorage();
-        }
-      });
+      deleteMarkerLayoutContainer.setOnClickListener(v -> deleteMarkerFilesFromStorage());
     } else {
       deleteMarkerLayoutContainer.setVisibility(View.GONE);
     }
 
-    ivDownloadImgUrl.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
-        ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
+    ivDownloadImgUrl.setOnClickListener(v -> {
+      ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+      ActivityCompat.requestPermissions(MarkerDetailsActivity.this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 1);
 
-        saveImageToGallery();
-      }
+      saveImageToGallery();
     });
   }
 
@@ -193,34 +168,20 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     // Delete the file
     markerImgReference
         .delete()
-        .addOnSuccessListener(new OnSuccessListener<Void>() {
-          @Override
-          public void onSuccess(Void unused) {
-            // File deleted successfully
-            Log.i(TAG, "Reference image file was successfully deleted");
-            augmentedObjReference
-                .delete()
-                .addOnSuccessListener(new OnSuccessListener<Void>() {
-                  @Override
-                  public void onSuccess(Void unused) {
-                    Log.i(TAG, "Both files were successfully deleted");
-                    deleteMarkerDocument();
-                  }
-                })
-                .addOnFailureListener(new OnFailureListener() {
-                  @Override
-                  public void onFailure(@NonNull Exception e) {
-                    Log.e(TAG, "Augmented object file was not deleted!", e);
-                  }
-                });
-          }
+        .addOnSuccessListener(unused -> {
+          // File deleted successfully
+          Log.i(TAG, "Reference image file was successfully deleted");
+          augmentedObjReference
+              .delete()
+              .addOnSuccessListener(unused1 -> {
+                Log.i(TAG, "Both files were successfully deleted");
+                deleteMarkerDocument();
+              })
+              .addOnFailureListener(e -> Log.e(TAG, "Augmented object file was not deleted!", e));
         })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            // Uh-oh, an error occurred!
-            Log.e(TAG, "Reference image file was not deleted!", e);
-          }
+        .addOnFailureListener(e -> {
+          // Uh-oh, an error occurred!
+          Log.e(TAG, "Reference image file was not deleted!", e);
         });
   }
 
@@ -228,24 +189,16 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     String deletedMarkerId = markerRef.getId();
     markerRef
         .delete()
-        .addOnSuccessListener(new OnSuccessListener<Void>() {
-          @Override
-          public void onSuccess(Void unused) {
-            Log.i(TAG, "Marker document successfully deleted!");
-            goUploadedMarkersActivity(deletedMarkerId);
-          }
+        .addOnSuccessListener(unused -> {
+          Log.i(TAG, "Marker document successfully deleted!");
+          goToUploadedMarkersActivity(deletedMarkerId);
         })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            Log.e(TAG, "Error deleting marker document", e);
-          }
-        });
+        .addOnFailureListener(e -> Log.e(TAG, "Error deleting marker document", e));
   }
 
-  private void goUploadedMarkersActivity(String deletedMarkerId) {
+  private void goToUploadedMarkersActivity(String deletedMarkerId) {
     Intent i = new Intent();
-    i.putExtra("deletedMarkerUid", deletedMarkerId);
+    i.putExtra(getString(R.string.deleted_marker_uid), deletedMarkerId);
     setResult(RESULT_OK, i);
     finish();
   }
@@ -256,11 +209,11 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     // Check if user is signed in (non-null) and update UI accordingly.
     FirebaseUser currentUser = firebaseAuth.getCurrentUser();
     if (currentUser == null) {
-      goLoginActivity();
+      goToLoginActivity();
     }
   }
 
-  private void goLoginActivity() {
+  private void goToLoginActivity() {
     Intent i = new Intent(this, LoginActivity.class);
     startActivity(i);
     finish();
@@ -276,7 +229,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
     FileOutputStream outputStream = null;
     File storageLoc = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-    File dir = new File(storageLoc.getAbsolutePath() + "/ARtGal");
+    File dir = new File(storageLoc.getAbsolutePath() + getString(R.string.art_gal));
     dir.mkdirs();
 
     String fileName = String.format("%d." + markerFileExtension, System.currentTimeMillis());
@@ -285,9 +238,9 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     try {
       outputStream = new FileOutputStream(outFile);
 
-      if (markerFileExtension.equals("jpeg") || markerFileExtension.equals("jpg")) {
+      if (markerFileExtension.equals(getString(R.string.jpeg)) || markerFileExtension.equals(getString(R.string.jpg))) {
         markerImgBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-      } else if (markerFileExtension.equals("png")) {
+      } else if (markerFileExtension.equals(getString(R.string.png))) {
         markerImgBitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream);
       }
 

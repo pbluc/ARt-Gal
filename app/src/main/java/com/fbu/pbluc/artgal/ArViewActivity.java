@@ -95,7 +95,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
             convertUriToBitmap(referenceImgUri, bitmap -> {
               try {
-                if(bitmap != null) {
+                if (bitmap != null) {
                   augmentedImageDatabase.addImage(referenceImgFileName, bitmap);
                 }
               } catch (ImageInsufficientQualityException e) {
@@ -104,7 +104,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
               }
               Log.i(TAG, "Size of augmented image database: " + augmentedImageDatabase.getNumImages());
 
-              if(augmentedImageDatabase.getNumImages() == totalReferenceImages[0]) {
+              if (augmentedImageDatabase.getNumImages() == totalReferenceImages[0]) {
                 // TODO: Update session and configuration
                 Log.i(TAG, "All images have been added to augmented image database");
 
@@ -115,12 +115,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
             });
           }
         })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            Log.e(TAG, "Could not get all documents across all subcollections of uploadedMarkers", e);
-          }
-        });
+        .addOnFailureListener(e -> Log.e(TAG, "Could not get all documents across all subcollections of uploadedMarkers", e));
   }
 
   public void convertUriToBitmap(Uri uri, final GlideCallback glideCallback) {
@@ -156,7 +151,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
         trackedMarkerDoc
             .get()
             .addOnSuccessListener(documentSnapshot -> {
-              if(documentSnapshot.exists()) {
+              if (documentSnapshot.exists()) {
                 trackedMarker = documentSnapshot.toObject(Marker.class);
                 trackedAugmentedObjUri = trackedMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
 
@@ -172,16 +167,16 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   }
 
   private void createModel(Anchor anchor, String fileName) {
-    augmentedObjRef = storageReference.child("augmentedObjects/" + fileName);
+    augmentedObjRef = storageReference.child(getString(R.string.augmented_object_ref) + fileName);
 
-      augmentedObjRef
-          .getDownloadUrl()
-          .addOnSuccessListener(augmentedObjUri -> {
-            Log.i(TAG, "onSuccess: Retrieved augmented object file");
+    augmentedObjRef
+        .getDownloadUrl()
+        .addOnSuccessListener(augmentedObjUri -> {
+          Log.i(TAG, "onSuccess: Retrieved augmented object file");
 
-            buildModel(augmentedObjUri, anchor);
-          })
-          .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not get augmented object file", e));
+          buildModel(augmentedObjUri, anchor);
+        })
+        .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not get augmented object file", e));
 
 
   }

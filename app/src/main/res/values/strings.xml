@@ -22,4 +22,25 @@
     <string name="marker_map">Marker Map</string>
     <string name="open_maps">Open Maps</string>
     <string name="done">Done</string>
+    <string name="mime_type_jpeg">image/jpeg</string>
+    <string name="mime_type_png">image/png</string>
+    <string name="type_images">image/*</string>
+    <string name="type_3d_models">application/octet-stream</string>
+    <string name="only_glb_assets">Only .glb assets</string>
+    <string name="reference_images_ref">referenceImages/</string>
+    <string name="augmented_object_ref">augmentedObjects/</string>
+    <string name="content">content</string>
+    <string name="flag">flag</string>
+    <string name="uploaded_markers_activity">UploadedMarkers</string>
+    <string name="new_marker_uid">newMarkerUid</string>
+    <string name="new_marker_latlng">newMarkerLatLng</string>
+    <string name="user_marker_uid">userMarkerUid</string>
+    <string name="clicked_marker_uid">clickedMarkerUid</string>
+    <string name="deleted_marker_uid">deletedMarkerUid</string>
+    <string name="art_gal">/ARtGal</string>
+    <string name="jpeg">jpeg</string>
+    <string name="jpg">jpg</string>
+    <string name="png">png</string>
+    <string name="main_activity">com.fbu.pbluc.artgal.MainActivity</string>
+    <string name="add_marker_activity">com.fbu.pbluc.artgal.AddMarkerActivity</string>
 </resources>

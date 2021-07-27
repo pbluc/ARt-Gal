@@ -19,6 +19,13 @@ import java.util.Map;
 
 public class Marker {
 
+  public static final String dateTimeFormat = "EEE, MMM dd, yyyy hh:mm aa";
+
+  private static final int SECOND_MILLIS = 1000;
+  private static final int MINUTE_MILLIS = 60 * SECOND_MILLIS;
+  private static final int HOUR_MILLIS = 60 * MINUTE_MILLIS;
+  private static final int DAY_MILLIS = 24 * HOUR_MILLIS;
+
   public static final String KEY_UPLOADED_MARKERS = "uploadedMarkers";
   public static final String KEY_TITLE = "email";
   public static final String KEY_DESCRIPTION = "description";
@@ -117,19 +124,13 @@ public class Marker {
 
   public String formattedCreatedAt() {
     Date createdDate = ((Timestamp) createdAt).toDate();
-    String markerFormat = "EEE, MMM dd, yyyy hh:mm aa";
-    DateFormat dateFormat = new SimpleDateFormat(markerFormat, Locale.ENGLISH);
+    DateFormat dateFormat = new SimpleDateFormat(dateTimeFormat, Locale.ENGLISH);
     dateFormat.setLenient(true);
     return dateFormat.format(createdDate);
   }
 
   public String calculateTimeAgo() {
     Date createdDate = ((Timestamp) createdAt).toDate();
-
-    int SECOND_MILLIS = 1000;
-    int MINUTE_MILLIS = 60 * SECOND_MILLIS;
-    int HOUR_MILLIS = 60 * MINUTE_MILLIS;
-    int DAY_MILLIS = 24 * HOUR_MILLIS;
 
     try {
       createdDate.getTime();

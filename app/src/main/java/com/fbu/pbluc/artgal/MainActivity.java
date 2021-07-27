@@ -43,14 +43,14 @@ public class MainActivity extends AppCompatActivity {
 
     btnLogout.setOnClickListener(v -> logoutUser());
 
-    btnUploadMarker.setOnClickListener(v -> goUploadActivity());
+    btnUploadMarker.setOnClickListener(v -> goToUploadActivity());
 
-    btnViewMarker.setOnClickListener(v -> goMarkersActivity());
+    btnViewMarker.setOnClickListener(v -> goToMarkersActivity());
 
-    btnArView.setOnClickListener(v -> goArViewActivity());
+    btnArView.setOnClickListener(v -> goToArViewActivity());
 
     btnMarkerMap.setOnClickListener(v -> {
-      goMarkerMapActivity();
+      goToMarkerMapActivity();
     });
 
   }
@@ -81,38 +81,38 @@ public class MainActivity extends AppCompatActivity {
     // Check if user is signed in (non-null) and update UI accordingly.
     FirebaseUser currentUser = firebaseAuth.getCurrentUser();
     if (currentUser == null) {
-      goLoginActivity();
+      goToLoginActivity();
     }
   }
 
-  private void goMarkersActivity() {
+  private void goToMarkersActivity() {
     Intent i = new Intent(this, UploadedMarkersActivity.class);
     startActivity(i);
   }
 
-  private void goUploadActivity() {
+  private void goToUploadActivity() {
     Intent i = new Intent(this, AddMarkerActivity.class);
     startActivity(i);
   }
 
-  private void goArViewActivity() {
+  private void goToArViewActivity() {
     Intent i = new Intent(this, ArViewActivity.class);
     startActivity(i);
   }
 
-  private void goLoginActivity() {
+  private void goToLoginActivity() {
     Intent i = new Intent(this, LoginActivity.class);
     startActivity(i);
     finish();
   }
 
-  private void goMarkerMapActivity() {
+  private void goToMarkerMapActivity() {
     Intent i = new Intent(this, MarkerMapActivity.class);
     startActivityFromChild(this, i, VIEW_ALL_MARKERS, null);
   }
 
   private void logoutUser() {
     FirebaseAuth.getInstance().signOut();
-    goLoginActivity();
+    goToLoginActivity();
   }
 }
