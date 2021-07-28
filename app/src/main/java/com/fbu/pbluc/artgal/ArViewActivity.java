@@ -91,18 +91,15 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     int orientation = getResources().getConfiguration().orientation;
     videoRecorder.setVideoQuality(CamcorderProfile.QUALITY_2160P, orientation);
 
-    ivVideoRecording.setOnClickListener(new View.OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        boolean recording = videoRecorder.onToggleRecord();
-        if(recording) {
-          // Recording has started
-          ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_stop_recording));
-        } else {
-          // Recording has stopped
-          ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_start_recording));
-          Toast.makeText(ArViewActivity.this, "Video recording saved!", Toast.LENGTH_SHORT).show();
-        }
+    ivVideoRecording.setOnClickListener(v -> {
+      boolean recording = videoRecorder.onToggleRecord();
+      if(recording) {
+        // Recording has started
+        ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_stop_recording));
+      } else {
+        // Recording has stopped
+        ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_start_recording));
+        Toast.makeText(ArViewActivity.this, "Video recording saved!", Toast.LENGTH_SHORT).show();
       }
     });
 

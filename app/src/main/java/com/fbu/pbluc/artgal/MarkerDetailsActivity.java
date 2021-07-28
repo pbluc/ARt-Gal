@@ -68,6 +68,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private ImageView ivReferenceImageMedia;
   private ImageView ivOriginalReferenceImageMedia;
   private ImageView ivDownloadImgUrl;
+  private ImageView ivPreview3dModel;
   private LinearLayout deleteMarkerLayoutContainer;
   private LinearLayout editMarkerLayoutContainer;
 
@@ -93,6 +94,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     ivReferenceImageMedia = findViewById(R.id.ivReferenceImageMedia);
     ivOriginalReferenceImageMedia = findViewById(R.id.ivOriginalReferenceImageMedia);
     ivDownloadImgUrl = findViewById(R.id.ivDownloadImgUrl);
+    ivPreview3dModel = findViewById(R.id.ivPreview3dModel);
     deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
     editMarkerLayoutContainer = findViewById(R.id.editMarkerLayoutContainer);
 
@@ -125,6 +127,31 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
       saveImageToGallery();
     });
+
+    ivPreview3dModel.setOnClickListener(v -> launchSceneViewer());
+  }
+
+  private void launchSceneViewer() {
+    Intent sceneViewerIntent = new Intent(Intent.ACTION_VIEW);
+
+    String augmentedObjFileName = marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+
+    storageReference.child(getString(R.string.augmented_object_ref)).child(augmentedObjFileName)
+        .getDownloadUrl()
+        .addOnSuccessListener(uri -> {
+          Uri intentUri =
+              Uri.parse("https://arvr.google.com/scene-viewer/1.0").buildUpon()
+                  .appendQueryParameter("file", uri.toString())
+                  .appendQueryParameter("mode", "3d_preferred")
+                  .appendQueryParameter("title", marker.getTitle())
+                  .appendQueryParameter("resizable", String.valueOf(true))
+                  .build();
+
+          sceneViewerIntent.setData(intentUri);
+          sceneViewerIntent.setPackage("com.google.ar.core");
+          startActivity(sceneViewerIntent);
+        })
+        .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not get uri of augmented obj file", e));
   }
 
   private void setUpMarkerDetailsLayout() {

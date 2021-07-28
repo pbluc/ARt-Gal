@@ -81,12 +81,12 @@
             android:textSize="16sp" />
 
         <ImageView
-            android:id="@+id/ivDownloadObjUrl"
+            android:id="@+id/ivPreview3dModel"
             android:layout_width="25dp"
             android:layout_height="25dp"
             android:layout_gravity="center_vertical"
             android:layout_marginRight="10dp"
-            android:src="@drawable/ic_download_img_url_dark" />
+            android:src="@drawable/ic_preview_3d_model" />
     </LinearLayout>
 
     <TextView
