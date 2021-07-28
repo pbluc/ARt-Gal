@@ -147,7 +147,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     btnFindAugmentedObject.setOnClickListener(v -> openFileChooser(v));
 
     btnSubmit.setOnClickListener(v -> {
-      if (getCallingActivity().getClassName().equals(getString(R.string.marker_details_activity))) {
+      if (getCallingActivity() != null && getCallingActivity().getClassName().equals(getString(R.string.marker_details_activity))) {
         updateCurrentMarkerDocument();
       } else {
         addMarkerDocument();

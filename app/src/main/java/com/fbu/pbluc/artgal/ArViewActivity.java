@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.media.CamcorderProfile;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -18,6 +19,7 @@ import com.bumptech.glide.request.transition.Transition;
 import com.fbu.pbluc.artgal.callbacks.GlideCallback;
 import com.fbu.pbluc.artgal.fragments.CustomArFragment;
 import com.fbu.pbluc.artgal.helpers.CameraPermissionHelper;
+import com.fbu.pbluc.artgal.helpers.VideoRecorder;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -64,6 +66,8 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
   private Anchor anchor;
 
+  private VideoRecorder videoRecorder;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -74,6 +78,15 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
     firebaseStorage = FirebaseStorage.getInstance();
     storageReference = firebaseStorage.getReference();
+
+    // Create a new video recorder instance.
+    videoRecorder = new VideoRecorder();
+    // Specify the AR scene view to be recorded.
+    videoRecorder.setSceneView(arFragment.getArSceneView());
+    // Set video quality and recording orientation to match that of the device.
+    int orientation = getResources().getConfiguration().orientation;
+    videoRecorder.setVideoQuality(CamcorderProfile.QUALITY_2160P, orientation);
+
   }
 
   public void setUpImageDatabase(Session session) {

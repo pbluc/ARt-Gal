@@ -129,17 +129,25 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     StorageReference augmentedObjsRef = storageReference.child(getString(R.string.augmented_object_ref));
 
     for(int i = 0; i < selected.size(); i++) {
+      Marker selectedMarker = selected.get(i);
+
       // Get file names of reference image and augmented object file
-      String selectedMarkerReferenceImgFileName = selected.get(i).getMarkerImg().get(Marker.KEY_FILENAME).toString();
-      String selectedMarkerAugmentedObjFileName = selected.get(i).getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+      String selectedMarkerReferenceImgFileName = selectedMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString();
+      String selectedMarkerAugmentedObjFileName = selectedMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
       // Get the marker uid of selected marker
       String selectedMarkerUid = selectedMarkerReferenceImgFileName.substring(29, 49);
 
       // Get selected marker document
-      DocumentReference selectedMarker = markersRef.document(selectedMarkerUid);
+      DocumentReference selectedMarkerDoc = markersRef.document(selectedMarkerUid);
 
       // Delete selected marker document
-      deleteBatch.delete(selectedMarker);
+      deleteBatch.delete(selectedMarkerDoc);
+
+      // Update list and notify adapter
+      int indexRemove = markers.indexOf(selectedMarker);
+      selected.remove(selectedMarker);
+      markers.remove(indexRemove);
+      adapter.notifyItemRemoved(indexRemove);
 
       // Delete files in Storage
       referenceImgsRef
