@@ -135,6 +135,13 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     Intent sceneViewerIntent = new Intent(Intent.ACTION_VIEW);
 
     String augmentedObjFileName = marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+    String modeParameterSetting;
+
+    if(!firebaseAuth.getCurrentUser().equals(marker.getUser().getId())) {
+      modeParameterSetting = "3d_only";
+    } else {
+      modeParameterSetting = "3d_preferred";
+    }
 
     storageReference.child(getString(R.string.augmented_object_ref)).child(augmentedObjFileName)
         .getDownloadUrl()
@@ -142,7 +149,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
           Uri intentUri =
               Uri.parse("https://arvr.google.com/scene-viewer/1.0").buildUpon()
                   .appendQueryParameter("file", uri.toString())
-                  .appendQueryParameter("mode", "3d_preferred")
+                  .appendQueryParameter("mode", modeParameterSetting)
                   .appendQueryParameter("title", marker.getTitle())
                   .appendQueryParameter("resizable", String.valueOf(true))
                   .build();
