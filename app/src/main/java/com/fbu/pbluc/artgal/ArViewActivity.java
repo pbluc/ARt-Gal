@@ -11,6 +11,8 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -22,7 +24,6 @@ import com.fbu.pbluc.artgal.helpers.CameraPermissionHelper;
 import com.fbu.pbluc.artgal.helpers.VideoRecorder;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.Frame;
@@ -51,6 +52,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private static final String TAG = "ArViewActivity";
 
   private CustomArFragment arFragment;
+  private ImageView ivVideoRecording;
 
   private FirebaseStorage firebaseStorage;
   private StorageReference storageReference;
@@ -74,6 +76,8 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     setContentView(R.layout.activity_ar_view);
 
     arFragment = (CustomArFragment) getSupportFragmentManager().findFragmentById(R.id.ar_fragment);
+    ivVideoRecording = findViewById(R.id.ivVideoRecording);
+
     arFragment.getArSceneView().getScene().addOnUpdateListener(this);
 
     firebaseStorage = FirebaseStorage.getInstance();
@@ -86,6 +90,21 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     // Set video quality and recording orientation to match that of the device.
     int orientation = getResources().getConfiguration().orientation;
     videoRecorder.setVideoQuality(CamcorderProfile.QUALITY_2160P, orientation);
+
+    ivVideoRecording.setOnClickListener(new View.OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        boolean recording = videoRecorder.onToggleRecord();
+        if(recording) {
+          // Recording has started
+          ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_stop_recording));
+        } else {
+          // Recording has stopped
+          ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_start_recording));
+          Toast.makeText(ArViewActivity.this, "Video recording saved!", Toast.LENGTH_SHORT).show();
+        }
+      }
+    });
 
   }
 
