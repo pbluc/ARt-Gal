@@ -37,6 +37,8 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.assets.RenderableSource;
+import com.google.ar.sceneform.collision.Box;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -233,7 +235,6 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
         .build()
         .thenAccept(modelRenderable -> {
           Log.i(TAG, "onSuccess: Model built");
-          Toast.makeText(ArViewActivity.this, "Model built", Toast.LENGTH_SHORT).show();
           placeModel(modelRenderable, anchor);
         })
         .exceptionally(
@@ -247,9 +248,11 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private void placeModel(ModelRenderable modelRenderable, Anchor anchor) {
     Log.i(TAG, "modelRenderable: " + modelRenderable.toString());
 
-    AnchorNode anchorNode = new AnchorNode(anchor);
-    anchorNode.setRenderable(modelRenderable);
-    arFragment.getArSceneView().getScene().addChild(anchorNode);
+    AnchorNode tempAnchorNode = new AnchorNode(anchor);
+    tempAnchorNode.setRenderable(modelRenderable);
+
+
+    arFragment.getArSceneView().getScene().addChild(tempAnchorNode);
   }
 
   @Override

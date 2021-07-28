@@ -23,4 +23,16 @@
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"/>
 
+    <!--
+    <ImageView
+        android:id="@+id/ivFitModelToView"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:clickable="true"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_autoscale_fit_3d_model"/>
+    -->
+
 </RelativeLayout>

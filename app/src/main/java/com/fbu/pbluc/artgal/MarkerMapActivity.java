@@ -118,7 +118,16 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
       MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
 
-      Intent returnIntent = new Intent();
+      // Attach marker click listener to map here
+      map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+        @Override
+        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
+          // Handle marker click here
+          return true;
+        }
+      });
+
+
       if (getCallingActivity() != null) {
         if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
           addAllMarkersToMap();
