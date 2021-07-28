@@ -6,11 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".UploadedMarkersActivity">
 
+    <Button
+        android:id="@+id/btnDeleteSelectedMarkers"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DELETE"
+        android:layout_centerHorizontal="true"
+        android:visibility="gone"/>
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/swipeContainer"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_below="@id/btnDeleteSelectedMarkers">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvMarkers"

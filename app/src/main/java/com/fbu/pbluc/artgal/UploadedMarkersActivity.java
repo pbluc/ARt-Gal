@@ -1,5 +1,6 @@
 package com.fbu.pbluc.artgal;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -11,25 +12,37 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.WriteBatch;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener, MarkersAdapter.ListItemLongClickListener {
+public class UploadedMarkersActivity extends AppCompatActivity implements MarkersAdapter.ListItemClickListener {
 
   private static final String TAG = "UploadedMarkersActivity";
 
@@ -39,6 +52,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   private RecyclerView rvMarkers;
   private ImageView ivAddMarker;
+  private Button btnDeleteSelectedMarkers;
   private SwipeRefreshLayout swipeContainer;
 
   private EndlessRecyclerViewScrollListener scrollListener;
@@ -49,6 +63,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   private FirebaseAuth firebaseAuth;
   private FirebaseUser currentUser;
   private FirebaseFirestore firebaseFirestore;
+  private FirebaseStorage firebaseStorage;
+  private StorageReference storageReference;
   private CollectionReference markersRef;
 
   @Override
@@ -59,6 +75,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     firebaseAuth = FirebaseAuth.getInstance();
     currentUser = firebaseAuth.getCurrentUser();
     firebaseFirestore = FirebaseFirestore.getInstance();
+    firebaseStorage = FirebaseStorage.getInstance();
+    storageReference = firebaseStorage.getReference();
 
     // Create a reference to the uploadedMarkers subcollection
     markersRef = firebaseFirestore
@@ -68,12 +86,13 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     rvMarkers = findViewById(R.id.rvMarkers);
     ivAddMarker = findViewById(R.id.ivAddMarker);
+    btnDeleteSelectedMarkers = findViewById(R.id.btnDeleteSelectedMarkers);
     swipeContainer = findViewById(R.id.swipeContainer);
 
     // Initialize markers
     markers = new CopyOnWriteArrayList<>();
     // Create adapter
-    adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this, this);
+    adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
     // Attach the adapter to the recyclerview to populate items
     rvMarkers.setAdapter(adapter);
     LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
@@ -92,9 +111,68 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     ivAddMarker.setOnClickListener(v -> goToAddMarkerActivity());
 
+    btnDeleteSelectedMarkers.setOnClickListener(v -> deleteSelectedMarkers());
+
     rvMarkers.addOnScrollListener(scrollListener);
 
     queryMarkers();
+  }
+
+  private void deleteSelectedMarkers() {
+    // Disable user interaction
+    getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+
+    WriteBatch deleteBatch = firebaseFirestore.batch();
+    List<Marker> selected = getSelectedItems();
+
+    StorageReference referenceImgsRef = storageReference.child(getString(R.string.reference_images_ref));
+    StorageReference augmentedObjsRef = storageReference.child(getString(R.string.augmented_object_ref));
+
+    for(int i = 0; i < selected.size(); i++) {
+      // Get file names of reference image and augmented object file
+      String selectedMarkerReferenceImgFileName = selected.get(i).getMarkerImg().get(Marker.KEY_FILENAME).toString();
+      String selectedMarkerAugmentedObjFileName = selected.get(i).getAugmentedObj().get(Marker.KEY_FILENAME).toString();
+      // Get the marker uid of selected marker
+      String selectedMarkerUid = selectedMarkerReferenceImgFileName.substring(29, 49);
+
+      // Get selected marker document
+      DocumentReference selectedMarker = markersRef.document(selectedMarkerUid);
+
+      // Delete selected marker document
+      deleteBatch.delete(selectedMarker);
+
+      // Delete files in Storage
+      referenceImgsRef
+          .child(selectedMarkerReferenceImgFileName)
+          .delete()
+          .addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+              augmentedObjsRef
+                  .child(selectedMarkerAugmentedObjFileName)
+                  .delete()
+                  .addOnCompleteListener(task1 -> {
+                    if(!task1.isSuccessful()) {
+                      Log.e(TAG, "onFailure: Could not delete augmented object", task1.getException());
+                    }
+                  });
+            } else {
+              Log.e(TAG, "onFailure: Could not delete reference image", task.getException());
+            }
+          });
+    }
+
+    deleteBatch
+        .commit()
+        .addOnSuccessListener(unused -> {
+          // Retain the user interaction
+          getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+          // Refresh RecyclerView contents
+          fetchUploadedMarkersAsync();
+
+          Toast.makeText(UploadedMarkersActivity.this, "Successfully deleted selected markers!", Toast.LENGTH_SHORT).show();
+        })
+        .addOnFailureListener(e -> Log.e(TAG, "Could not delete all selected documents", e));
+
   }
 
   private void queryMarkers() {
@@ -257,5 +335,24 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     Marker longClickedMarker = markers.get(position);
     longClickedMarker.setSelected(!longClickedMarker.isSelected());
     view.setBackgroundColor(longClickedMarker.isSelected() ? Color.GRAY : Color.BLACK);
+
+    if (getSelectedItems().size() > 0) {
+      // Show view of delete all button
+      btnDeleteSelectedMarkers.setVisibility(View.VISIBLE);
+    } else {
+      // Hide view of delete all button
+      btnDeleteSelectedMarkers.setVisibility(View.GONE);
+    }
   }
+
+  private List<Marker> getSelectedItems() {
+    List<Marker> selectedItems = new ArrayList<>();
+    for(int i = 0; i < markers.size(); i++) {
+      if (markers.get(i).isSelected()) {
+        selectedItems.add(markers.get(i));
+      }
+    }
+    return selectedItems;
+  }
+
 }

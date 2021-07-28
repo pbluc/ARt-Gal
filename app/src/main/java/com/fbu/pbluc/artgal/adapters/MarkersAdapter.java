@@ -20,13 +20,11 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
   private Context mContext;
 
   final private ListItemClickListener mOnClickListener;
-  final private ListItemLongClickListener mOnLongClickListener;
 
-  public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener, ListItemLongClickListener mOnLongClickListener) {
+  public MarkersAdapter(List<Marker> mMarkers, Context mContext, ListItemClickListener onClickListener) {
     this.mMarkers = mMarkers;
     this.mContext = mContext;
     this.mOnClickListener = onClickListener;
-    this.mOnLongClickListener = mOnLongClickListener;
   }
 
   @NonNull
@@ -100,7 +98,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       int position = getAdapterPosition();
       switch (view.getId()) {
         default:
-          mOnLongClickListener.onListItemLongClick(position, view);
+          mOnClickListener.onListItemLongClick(position, view);
           break;
       }
       return true;
@@ -109,9 +107,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
 
   public interface ListItemClickListener {
     void onListItemClick(int position);
-  }
-
-  public interface ListItemLongClickListener {
     void onListItemLongClick(int position, View view);
   }
+
 }
