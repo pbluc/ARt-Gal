@@ -36,6 +36,9 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
 
@@ -123,6 +126,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         @Override
         public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
           // Handle marker click here
+          Marker clicked = (Marker) marker.getTag();
           return true;
         }
       });
@@ -180,6 +184,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
                 .position(listingPosition)
                 .title(title)
                 .snippet(description));
+            mapMarker.setTag(retrievedMarker);
             Log.i(TAG, "Successfully added marker to map");
           }
         })
