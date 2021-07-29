@@ -35,11 +35,13 @@ import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.ImageInsufficientQualityException;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.assets.RenderableSource;
 import com.google.ar.sceneform.collision.Box;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -69,6 +71,10 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private String trackedAugmentedObjUri;
 
   private Anchor anchor;
+  private AnchorNode anchorNode;
+  private TransformableNode transformableNode;
+  private Node secondNode;
+  private AnchorNode renderingModelNode;
 
   private VideoRecorder videoRecorder;
 
@@ -223,7 +229,6 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     RenderableSource renderableSource = RenderableSource
         .builder()
         .setSource(ArViewActivity.this, augmentedObjUri, RenderableSource.SourceType.GLB)
-        .setScale(0.25f)  // Scale the original model to 50%
         .setRecenterMode(RenderableSource.RecenterMode.ROOT)
         .build();
 
@@ -248,11 +253,29 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private void placeModel(ModelRenderable modelRenderable, Anchor anchor) {
     Log.i(TAG, "modelRenderable: " + modelRenderable.toString());
 
-    AnchorNode tempAnchorNode = new AnchorNode(anchor);
-    tempAnchorNode.setRenderable(modelRenderable);
+    float wantedRealRadius = 0.5f;
 
+    renderingModelNode = new AnchorNode(anchor);
+    renderingModelNode.setParent(arFragment.getArSceneView().getScene());
+    renderingModelNode.setRenderable(modelRenderable);
 
-    arFragment.getArSceneView().getScene().addChild(tempAnchorNode);
+    // Retrieving abstract collision shape (box) of model renderable
+    Box startingCollisionShape = (Box) renderingModelNode.getCollisionShape();
+
+    // Checking the size of the renderable through the dimensions of the collision shape
+    float xRadius = startingCollisionShape.getSize().x;
+    float yRadius = startingCollisionShape.getSize().y;
+    float zRadius = startingCollisionShape.getSize().z;
+
+    // Largest dimension of box collision shape
+    float encompassingRadius = Math.max(Math.max(xRadius, yRadius), zRadius);
+
+    // Determine the unique scale ratio
+    float scaleFactor = 1 / (encompassingRadius / wantedRealRadius);
+
+    // Set a world scale on the anchor node using ratio
+    renderingModelNode.setWorldScale(new Vector3(scaleFactor, scaleFactor, scaleFactor));
+
   }
 
   @Override

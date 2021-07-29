@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.icu.text.Transliterator;
@@ -14,6 +15,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
+import com.fbu.pbluc.artgal.adapters.CustomWindowAdapter;
 import com.fbu.pbluc.artgal.models.Marker;
 
 import com.google.android.gms.location.FusedLocationProviderClient;
@@ -28,6 +30,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.tasks.OnFailureListener;
@@ -35,6 +39,7 @@ import com.google.android.gms.tasks.OnSuccessListener;
 
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.maps.android.clustering.ClusterManager;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -51,6 +56,8 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   private FirebaseFirestore firebaseFirestore;
 
   private Button btnDoneSettingLoc;
+
+  private BitmapDescriptor customMarkerIcon;
 
   private SupportMapFragment mapFragment;
   private GoogleMap map;
@@ -77,6 +84,8 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     btnDoneSettingLoc = findViewById(R.id.btnDoneSettingLoc);
 
     firebaseFirestore = FirebaseFirestore.getInstance();
+
+    // customMarkerIcon = BitmapDescriptorFactory.fromResource(R.drawable.canvas_jellyfish);
 
     if (savedInstanceState != null && savedInstanceState.keySet().contains(KEY_LOC)) {
       // Since KEY_LOCATION was found in the Bundle, we can be sure that mCurrentLocation
@@ -121,20 +130,20 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
       MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
 
-      // Attach marker click listener to map here
-      map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-        @Override
-        public boolean onMarkerClick(com.google.android.gms.maps.model.Marker marker) {
-          // Handle marker click here
-          Marker clicked = (Marker) marker.getTag();
-          return true;
-        }
-      });
-
 
       if (getCallingActivity() != null) {
         if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
+          map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
+
           addAllMarkersToMap();
+
+          // Attach marker click listener to map here
+          map.setOnMarkerClickListener(marker -> {
+            // Handle marker click here
+            Marker clicked = (Marker) marker.getTag();
+            return true;
+          });
+
         } else if (getCallingActivity().getClassName().equals(getString(R.string.add_marker_activity))) {
           btnDoneSettingLoc.setVisibility(View.VISIBLE);
 
@@ -162,6 +171,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   }
 
   private void addAllMarkersToMap() {
+
     firebaseFirestore
         .collectionGroup(Marker.KEY_UPLOADED_MARKERS)
         .whereNotEqualTo(Marker.KEY_LOCATION, null)
@@ -184,7 +194,9 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
                 .position(listingPosition)
                 .title(title)
                 .snippet(description));
+            // mapMarker.setIcon(customMarkerIcon);
             mapMarker.setTag(retrievedMarker);
+
             Log.i(TAG, "Successfully added marker to map");
           }
         })
