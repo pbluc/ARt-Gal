@@ -49,6 +49,8 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 
 public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateListener {
@@ -57,6 +59,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
   private CustomArFragment arFragment;
   private ImageView ivVideoRecording;
+  private ImageView ivAutoScaleModel;
 
   private FirebaseStorage firebaseStorage;
   private StorageReference storageReference;
@@ -68,13 +71,15 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private AugmentedImageDatabase augmentedImageDatabase;
 
   private Marker trackedMarker;
-  private String trackedAugmentedObjUri;
 
-  private Anchor anchor;
-  private AnchorNode anchorNode;
-  private TransformableNode transformableNode;
-  private Node secondNode;
-  private AnchorNode renderingModelNode;
+  private String trackedAugmentedObjUri;
+  private boolean fitModelToView = true;
+
+  private Anchor autoScaledAnchor;
+  private Anchor unscaledAnchor;
+  private AnchorNode autoScaledAnchorNode;
+  private AnchorNode unscaledAnchorNode;
+  private RenderableSource renderableSource;
 
   private VideoRecorder videoRecorder;
 
@@ -85,8 +90,12 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
     arFragment = (CustomArFragment) getSupportFragmentManager().findFragmentById(R.id.ar_fragment);
     ivVideoRecording = findViewById(R.id.ivVideoRecording);
+    ivAutoScaleModel = findViewById(R.id. ivAutoScaleModel);
 
     arFragment.getArSceneView().getScene().addOnUpdateListener(this);
+
+    autoScaledAnchorNode = new AnchorNode();
+    unscaledAnchorNode = new AnchorNode();
 
     firebaseStorage = FirebaseStorage.getInstance();
     storageReference = firebaseStorage.getReference();
@@ -109,6 +118,10 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
         ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_start_recording));
         Toast.makeText(ArViewActivity.this, "Video recording saved!", Toast.LENGTH_SHORT).show();
       }
+    });
+
+    ivAutoScaleModel.setOnClickListener(v -> {
+      fitModelToView = !fitModelToView;
     });
 
   }
@@ -192,9 +205,16 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
                 trackedMarker = documentSnapshot.toObject(Marker.class);
                 trackedAugmentedObjUri = trackedMarker.getAugmentedObj().get(Marker.KEY_FILENAME).toString();
 
-                anchor = image.createAnchor(image.getCenterPose());
+                if (fitModelToView) {
+                  autoScaledAnchor = image.createAnchor(image.getCenterPose());
+                  autoScaledAnchorNode.setAnchor(autoScaledAnchor);
+                  createModel(autoScaledAnchor, trackedAugmentedObjUri);
+                } else {
+                  unscaledAnchor = image.createAnchor(image.getCenterPose());
+                  unscaledAnchorNode.setAnchor(unscaledAnchor);
+                  createModel(unscaledAnchor, trackedAugmentedObjUri);
+                }
 
-                createModel(anchor, trackedAugmentedObjUri);
               }
             })
             .addOnFailureListener(e -> Log.e(TAG, "onFailure: getting tracked marker document failed", e));
@@ -226,7 +246,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
      */
 
     //Log.i(TAG, "augmented object file path: " + augmentedObjFile.getPath());
-    RenderableSource renderableSource = RenderableSource
+    renderableSource = RenderableSource
         .builder()
         .setSource(ArViewActivity.this, augmentedObjUri, RenderableSource.SourceType.GLB)
         .setRecenterMode(RenderableSource.RecenterMode.ROOT)
@@ -253,14 +273,36 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private void placeModel(ModelRenderable modelRenderable, Anchor anchor) {
     Log.i(TAG, "modelRenderable: " + modelRenderable.toString());
 
+    if (fitModelToView) {
+      arFragment.getArSceneView().getScene().removeChild(unscaledAnchorNode);
+      if(unscaledAnchorNode.getAnchor() != null) {
+        unscaledAnchorNode.getAnchor().detach();
+      }
+      unscaledAnchorNode.setParent(null);
+
+      autoScaledAnchorNode.setAnchor(anchor);
+      autoScaledAnchorNode.setParent(arFragment.getArSceneView().getScene());
+      autoScaledAnchorNode.setRenderable(modelRenderable);
+
+      scaleModel(autoScaledAnchorNode);
+    } else {
+      arFragment.getArSceneView().getScene().removeChild(autoScaledAnchorNode);
+      if(autoScaledAnchorNode.getAnchor() != null) {
+        autoScaledAnchorNode.getAnchor().detach();
+      }
+      autoScaledAnchorNode.setParent(null);
+
+      unscaledAnchorNode.setAnchor(anchor);
+      unscaledAnchorNode.setParent(arFragment.getArSceneView().getScene());
+      unscaledAnchorNode.setRenderable(modelRenderable);
+    }
+  }
+
+  private void scaleModel(AnchorNode node) {
     float wantedRealRadius = 0.5f;
 
-    renderingModelNode = new AnchorNode(anchor);
-    renderingModelNode.setParent(arFragment.getArSceneView().getScene());
-    renderingModelNode.setRenderable(modelRenderable);
-
     // Retrieving abstract collision shape (box) of model renderable
-    Box startingCollisionShape = (Box) renderingModelNode.getCollisionShape();
+    Box startingCollisionShape = (Box) node.getCollisionShape();
 
     // Checking the size of the renderable through the dimensions of the collision shape
     float xRadius = startingCollisionShape.getSize().x;
@@ -270,12 +312,14 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
     // Largest dimension of box collision shape
     float encompassingRadius = Math.max(Math.max(xRadius, yRadius), zRadius);
 
-    // Determine the unique scale ratio
-    float scaleFactor = 1 / (encompassingRadius / wantedRealRadius);
+    // Check if scaling is needed
+    if (encompassingRadius > wantedRealRadius) {
+      // Determine the unique scale ratio
+      float scaleFactor = 1 / (encompassingRadius / wantedRealRadius);
 
-    // Set a world scale on the anchor node using ratio
-    renderingModelNode.setWorldScale(new Vector3(scaleFactor, scaleFactor, scaleFactor));
-
+      // Set a world scale on the anchor node using ratio
+      node.setWorldScale(new Vector3(scaleFactor, scaleFactor, scaleFactor));
+    }
   }
 
   @Override
