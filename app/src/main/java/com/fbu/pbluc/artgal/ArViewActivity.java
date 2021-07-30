@@ -12,7 +12,6 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
-import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
 
@@ -51,13 +50,14 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 
 public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateListener {
 
   private static final String TAG = "ArViewActivity";
+
+  public static final float MAX_SCALE = 10f;
+  public static final float MIN_SCALE = 0.01f;
 
   private CustomArFragment arFragment;
   private ImageView ivVideoRecording;
@@ -82,6 +82,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
   private AnchorNode autoScaledAnchorNode;
   private AnchorNode unscaledAnchorNode;
   private RenderableSource renderableSource;
+  private TransformableNode transformableNode;
 
   private VideoRecorder videoRecorder;
 
@@ -98,6 +99,11 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
     autoScaledAnchorNode = new AnchorNode();
     unscaledAnchorNode = new AnchorNode();
+
+    // Create the transformable
+    transformableNode = new TransformableNode(arFragment.getTransformationSystem());
+    transformableNode.getScaleController().setMaxScale(MAX_SCALE);
+    transformableNode.getScaleController().setMinScale(MIN_SCALE);
 
     firebaseStorage = FirebaseStorage.getInstance();
     storageReference = firebaseStorage.getReference();
@@ -126,8 +132,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
       fitModelToView = !fitModelToView;
     });
 
-    autoScaledAnchorNode.setOnTapListener((hitTestResult, motionEvent) -> unrenderModelOnTap(hitTestResult, motionEvent));
-    unscaledAnchorNode.setOnTapListener((hitTestResult, motionEvent) -> unrenderModelOnTap(hitTestResult, motionEvent));
+    transformableNode.setOnTapListener((hitTestResult, motionEvent) -> unrenderModelOnTap(hitTestResult, motionEvent));
 
   }
 
@@ -147,9 +152,10 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
       Node hitNode = hitTestResult.getNode();
 
       arFragment.getArSceneView().getScene().removeChild(hitNode);
-      AnchorNode hitNodeAnchor = (AnchorNode) hitNode;
+      TransformableNode hitNodeAnchor = (TransformableNode) hitNode;
       if(hitNodeAnchor != null) {
-        hitNodeAnchor.getAnchor().detach();
+        AnchorNode parentNodeAnchor = (AnchorNode) hitNodeAnchor.getParent();
+        parentNodeAnchor.getAnchor().detach();
       }
       hitNode.setParent(null);
     }
@@ -311,9 +317,12 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
       autoScaledAnchorNode.setAnchor(anchor);
       autoScaledAnchorNode.setParent(arFragment.getArSceneView().getScene());
-      autoScaledAnchorNode.setRenderable(modelRenderable);
 
-      scaleModel(autoScaledAnchorNode);
+      scaleModel(autoScaledAnchorNode, modelRenderable);
+
+      // Enable object scaling
+      enableObjectScaling(autoScaledAnchorNode, modelRenderable);
+
     } else {
       arFragment.getArSceneView().getScene().removeChild(autoScaledAnchorNode);
       if(autoScaledAnchorNode.getAnchor() != null) {
@@ -323,15 +332,24 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
       unscaledAnchorNode.setAnchor(anchor);
       unscaledAnchorNode.setParent(arFragment.getArSceneView().getScene());
-      unscaledAnchorNode.setRenderable(modelRenderable);
+
+      // Enable object scaling
+      enableObjectScaling(unscaledAnchorNode, modelRenderable);
     }
+
   }
 
-  private void scaleModel(AnchorNode node) {
+  private void enableObjectScaling(AnchorNode anchorNode, ModelRenderable modelRenderable) {
+    transformableNode.setParent(anchorNode);
+    transformableNode.setRenderable(modelRenderable);
+    transformableNode.select();
+  }
+
+  private void scaleModel(AnchorNode node, ModelRenderable modelRenderable) {
     float wantedRealRadius = 0.5f;
 
     // Retrieving abstract collision shape (box) of model renderable
-    Box startingCollisionShape = (Box) node.getCollisionShape();
+    Box startingCollisionShape = (Box) modelRenderable.getCollisionShape();
 
     // Checking the size of the renderable through the dimensions of the collision shape
     float xRadius = startingCollisionShape.getSize().x;
