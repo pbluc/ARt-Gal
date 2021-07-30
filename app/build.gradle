@@ -57,6 +57,9 @@ dependencies {
     implementation "com.google.android.gms:play-services-maps:$googlePlayVersion"
     implementation "com.google.android.gms:play-services-location:$googlePlayVersion"
     implementation 'com.google.maps.android:android-maps-utils:2.2.3'
+    implementation 'com.google.android.filament:filament-android:1.6.0'
+    implementation 'com.google.android.filament:filament-utils-android:1.6.0'
+    implementation 'com.google.android.filament:gltfio-android:1.6.0'
     implementation "org.permissionsdispatcher:permissionsdispatcher:$permissionDispatcherVersion"
     annotationProcessor "org.permissionsdispatcher:permissionsdispatcher-processor:$permissionDispatcherVersion"
 
