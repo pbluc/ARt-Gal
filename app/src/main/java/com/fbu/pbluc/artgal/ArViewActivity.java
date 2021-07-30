@@ -333,7 +333,7 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
       unscaledAnchorNode.setAnchor(anchor);
       unscaledAnchorNode.setParent(arFragment.getArSceneView().getScene());
 
-      // Enable object scaling
+      // TODO: Determine whether unscaled model should be transformable
       enableObjectScaling(unscaledAnchorNode, modelRenderable);
     }
 
