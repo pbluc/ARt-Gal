@@ -11,6 +11,7 @@ import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -35,6 +36,7 @@ import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.ImageInsufficientQualityException;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.HitTestResult;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.Scene;
 import com.google.ar.sceneform.assets.RenderableSource;
@@ -124,6 +126,33 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
       fitModelToView = !fitModelToView;
     });
 
+    autoScaledAnchorNode.setOnTapListener((hitTestResult, motionEvent) -> unrenderModelOnTap(hitTestResult, motionEvent));
+    unscaledAnchorNode.setOnTapListener((hitTestResult, motionEvent) -> unrenderModelOnTap(hitTestResult, motionEvent));
+
+  }
+
+  private void unrenderModelOnTap(HitTestResult hitTestResult, MotionEvent motionEvent) {
+    Log.i(TAG, "unrenderModelOnTap");
+
+    arFragment.onPeekTouch(hitTestResult, motionEvent);
+
+    // We are only interested in the ACTION_UP events - anything else just return
+    if (motionEvent.getAction() != MotionEvent.ACTION_UP) {
+      return;
+    }
+
+    // Check for touching a Sceneform node
+    if (hitTestResult.getNode() != null) {
+      Log.i(TAG, "unrenderModelOnTap hitTestResult.getNode() != null");
+      Node hitNode = hitTestResult.getNode();
+
+      arFragment.getArSceneView().getScene().removeChild(hitNode);
+      AnchorNode hitNodeAnchor = (AnchorNode) hitNode;
+      if(hitNodeAnchor != null) {
+        hitNodeAnchor.getAnchor().detach();
+      }
+      hitNode.setParent(null);
+    }
   }
 
   public void setUpImageDatabase(Session session) {
@@ -324,8 +353,8 @@ public class ArViewActivity extends AppCompatActivity implements Scene.OnUpdateL
 
   @Override
   protected void onPause() {
-    arFragment.getArSceneView().getSession().pause();
     super.onPause();
+    arFragment.getArSceneView().getSession().pause();
   }
 
   @Override
