@@ -1,13 +1,12 @@
 package com.fbu.pbluc.artgal;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import android.Manifest;
 
-import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
+import android.content.pm.PackageManager;
 import android.media.CamcorderProfile;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -15,42 +14,14 @@ import android.view.MotionEvent;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.CustomTarget;
-import com.bumptech.glide.request.transition.Transition;
-import com.fbu.pbluc.artgal.callbacks.GlideCallback;
 import com.fbu.pbluc.artgal.fragments.CustomArFragment;
-import com.fbu.pbluc.artgal.helpers.CameraPermissionHelper;
 import com.fbu.pbluc.artgal.helpers.VideoRecorder;
-import com.fbu.pbluc.artgal.models.Marker;
-import com.fbu.pbluc.artgal.models.User;
-import com.google.ar.core.Anchor;
-import com.google.ar.core.AugmentedImage;
-import com.google.ar.core.Frame;
-import com.google.ar.core.Session;
 
-import com.google.ar.core.AugmentedImageDatabase;
-import com.google.ar.core.Config;
-import com.google.ar.core.TrackingState;
-import com.google.ar.core.exceptions.ImageInsufficientQualityException;
+import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.HitTestResult;
 import com.google.ar.sceneform.Node;
-import com.google.ar.sceneform.Scene;
-import com.google.ar.sceneform.assets.RenderableSource;
-import com.google.ar.sceneform.collision.Box;
-import com.google.ar.sceneform.math.Vector3;
-import com.google.ar.sceneform.rendering.ModelRenderable;
-import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-
-import java.util.Collection;
 
 import static com.fbu.pbluc.artgal.fragments.CustomArFragment.MAX_SCALE;
 import static com.fbu.pbluc.artgal.fragments.CustomArFragment.MIN_SCALE;
@@ -59,6 +30,7 @@ import static com.fbu.pbluc.artgal.fragments.CustomArFragment.MIN_SCALE;
 public class ArViewActivity extends AppCompatActivity {
 
   private static final String TAG = "ArViewActivity";
+  private static final int CAMERA_PERMISSION_CODE = 0;
 
   private CustomArFragment arFragment;
   private ImageView ivVideoRecording;
@@ -136,25 +108,44 @@ public class ArViewActivity extends AppCompatActivity {
     }
   }
 
+  // TODO: Pause and resume properly with ArViewActivity lifecycle
 
   @Override
   protected void onPause() {
     super.onPause();
-    arFragment.getArSceneView().getSession().pause();
+    if (arFragment.getArSceneView().getSession() != null) {
+      arFragment.getArSceneView().getSession().pause();
+    }
   }
 
   @Override
   protected void onResume() {
     super.onResume();
-    // Request the camera permission, if necessary.
-    if (!CameraPermissionHelper.hasCameraPermission(this)) {
-      CameraPermissionHelper.requestCameraPermission(this);
+    // Check if we do not have permissions to use the camera
+    if(ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+      // If not, request permissions for camera
+      ActivityCompat.requestPermissions(
+          this, new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION_CODE);
+
+      if (arFragment.getArSceneView().getSession() != null) {
+        try {
+          arFragment.getArSceneView().getSession().resume();
+        } catch (CameraNotAvailableException e) {
+          e.printStackTrace();
+        }
+      }
     }
   }
 
   @Override
   protected void onDestroy() {
-    AsyncTask.execute(() -> arFragment.getArSceneView().getSession().close());
+    if (arFragment.getArSceneView().getSession() != null) {
+      AsyncTask.execute(() -> {
+        arFragment.getArSceneView().getSession().close();
+      });
+    }
+
     super.onDestroy();
   }
+
 }

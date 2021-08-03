@@ -145,6 +145,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
       // Update list and notify adapter
       int indexRemove = markers.indexOf(selectedMarker);
+      // TODO: Determine if this needs to be placed here or elsewhere
       selected.remove(selectedMarker);
       markers.remove(indexRemove);
       adapter.notifyItemRemoved(indexRemove);
@@ -176,6 +177,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
           getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
           // Refresh RecyclerView contents
           fetchUploadedMarkersAsync();
+
+          // TODO: Update the current user's user document in Firestore
 
           Toast.makeText(UploadedMarkersActivity.this, "Successfully deleted selected markers!", Toast.LENGTH_SHORT).show();
         })

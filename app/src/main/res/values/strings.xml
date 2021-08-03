@@ -16,7 +16,6 @@
     <string name="view_markers">View Markers</string>
     <string name="submit">Submit</string>
     <string name="open_ar">Open AR</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="google_maps_api_key"> AIzaSyA8saltTu4FA9cR-1dwxIhs1GJo9pncKxM</string>
     <string name="marker_map">Marker Map</string>
