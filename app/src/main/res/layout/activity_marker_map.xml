@@ -34,4 +34,44 @@
         map:liteMode="false"
         />
 
+    <Button
+        android:id="@+id/btnChangeMarkerViewRadius"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginStart="15dp"
+        android:layout_marginBottom="15dp"
+        android:text="@string/change_radius"
+        android:textSize="11dp"
+        android:visibility="gone"/>
+
+    <TextView
+        android:id="@+id/tvMarkersWithinRadius"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/btnChangeMarkerViewRadius"
+        android:layout_alignEnd="@id/btnChangeMarkerViewRadius"
+        android:layout_above="@id/btnChangeMarkerViewRadius"
+        android:layout_marginBottom="5dp"
+        android:gravity="center_horizontal"
+        android:text="5 miles"
+        android:visibility="gone"
+        android:textColor="@color/black"/>
+
+    <EditText
+        android:id="@+id/etMarkersWithinRadius"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/btnChangeMarkerViewRadius"
+        android:layout_alignEnd="@id/btnChangeMarkerViewRadius"
+        android:layout_above="@id/btnChangeMarkerViewRadius"
+        android:layout_marginBottom="5dp"
+        android:gravity="center_horizontal"
+        android:textSize="15dp"
+        android:text="5"
+        android:inputType="numberDecimal"
+        android:visibility="gone"
+        android:textColor="@color/black"/>
+
 </RelativeLayout>

@@ -14,6 +14,8 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
 
 import com.fbu.pbluc.artgal.adapters.CustomWindowAdapter;
 import com.fbu.pbluc.artgal.models.Marker;
@@ -43,9 +45,13 @@ import com.google.maps.android.clustering.ClusterManager;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import permissions.dispatcher.NeedsPermission;
 import permissions.dispatcher.RuntimePermissions;
+
+
 
 import static com.google.android.gms.location.LocationServices.getFusedLocationProviderClient;
 
@@ -56,6 +62,9 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   private FirebaseFirestore firebaseFirestore;
 
   private Button btnDoneSettingLoc;
+  private Button btnChangeMarkerViewRadius;
+  private TextView tvMarkersWithinRadius;
+  private EditText etMarkersWithinRadius;
 
   private BitmapDescriptor customMarkerIcon;
 
@@ -63,8 +72,14 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   private GoogleMap map;
   private LocationRequest mLocationRequest;
   Location mCurrentLocation;
+
+  private List<LatLng> allMapMarkerLatLngs;
+  private List<Marker> allMarkerDocuments;
+
   private long UPDATE_INTERVAL = 60000;  /* 60 secs */
   private long FASTEST_INTERVAL = 5000; /* 5 secs */
+  private int CHANGE_RADIUS_BTN_STATE = 1;
+  private double SHOW_MARKER_WITHIN_RADIUS = 0.2;
 
   private final static String KEY_LOC = "location";
 
@@ -82,6 +97,11 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     setContentView(R.layout.activity_marker_map);
 
     btnDoneSettingLoc = findViewById(R.id.btnDoneSettingLoc);
+    btnChangeMarkerViewRadius = findViewById(R.id.btnChangeMarkerViewRadius);
+    tvMarkersWithinRadius = findViewById(R.id.tvMarkersWithinRadius);
+    etMarkersWithinRadius = findViewById(R.id.etMarkersWithinRadius);
+
+    tvMarkersWithinRadius.setText(Double.toString(SHOW_MARKER_WITHIN_RADIUS) + getString(R.string.miles));
 
     firebaseFirestore = FirebaseFirestore.getInstance();
 
@@ -93,12 +113,37 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       mCurrentLocation = savedInstanceState.getParcelable(KEY_LOC);
     }
 
+    allMapMarkerLatLngs = new ArrayList<>();
+    allMarkerDocuments = new ArrayList<>();
+
     btnDoneSettingLoc.setOnClickListener(v -> {
       double[] latLng = {placedMarker.getPosition().latitude, placedMarker.getPosition().longitude};
       Intent returnIntent = new Intent();
       returnIntent.putExtra(getString(R.string.new_marker_latlng), latLng);
       setResult(Activity.RESULT_OK, returnIntent);
       finish();
+    });
+
+    btnChangeMarkerViewRadius.setOnClickListener(v -> {
+      if (CHANGE_RADIUS_BTN_STATE % 2 == 0) { // Button is being clicked to send new value of radius
+        tvMarkersWithinRadius.setVisibility(View.VISIBLE);
+        etMarkersWithinRadius.setVisibility(View.GONE);
+
+        SHOW_MARKER_WITHIN_RADIUS = Double.parseDouble(etMarkersWithinRadius.getText().toString().trim());
+        tvMarkersWithinRadius.setText(SHOW_MARKER_WITHIN_RADIUS + getString(R.string.miles));
+
+        map.clear();
+        addNearestMarkersToMap();
+
+        CHANGE_RADIUS_BTN_STATE--;
+      } else { // Button is being clicked to enter a new radius
+        tvMarkersWithinRadius.setVisibility(View.GONE);
+        etMarkersWithinRadius.setVisibility(View.VISIBLE);
+
+        etMarkersWithinRadius.setText(Double.toString(SHOW_MARKER_WITHIN_RADIUS));
+
+        CHANGE_RADIUS_BTN_STATE++;
+      }
     });
 
     setUpMapIfNeeded();
@@ -135,7 +180,10 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
           map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
 
-          addAllMarkersToMap();
+          btnChangeMarkerViewRadius.setVisibility(View.VISIBLE);
+          tvMarkersWithinRadius.setVisibility(View.VISIBLE);
+
+          addAllMarkerDocs();
 
           // Attach marker click listener to map here
           map.setOnMarkerClickListener(marker -> {
@@ -170,38 +218,54 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     }
   }
 
-  private void addAllMarkersToMap() {
+  private void addAllMarkerDocs() {
 
     firebaseFirestore
         .collectionGroup(Marker.KEY_UPLOADED_MARKERS)
         .whereNotEqualTo(Marker.KEY_LOCATION, null)
         .get()
         .addOnSuccessListener(queryDocumentSnapshots -> {
+          int expectedMarkerDocumentCount = queryDocumentSnapshots.size();
           for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
             Marker retrievedMarker = documentSnapshot.toObject(Marker.class);
 
             String title = retrievedMarker.getTitle();
             String description = retrievedMarker.getDescription();
+            allMarkerDocuments.add(retrievedMarker);
 
             Double lat = (Double) retrievedMarker.getLocation().get(Marker.KEY_LATITUDE);
             Double lng = (Double) retrievedMarker.getLocation().get(Marker.KEY_LONGITUDE);
 
             // listingPosition is a LatLng point
             LatLng listingPosition = new LatLng(lat, lng);
+            allMapMarkerLatLngs.add(listingPosition);
 
-            // Create the marker on the fragment
-            com.google.android.gms.maps.model.Marker mapMarker = map.addMarker(new MarkerOptions()
-                .position(listingPosition)
-                .title(title)
-                .snippet(description));
-            // mapMarker.setIcon(customMarkerIcon);
-            mapMarker.setTag(retrievedMarker);
-
-            Log.i(TAG, "Successfully added marker to map");
+            if (allMarkerDocuments.size() == expectedMarkerDocumentCount && allMapMarkerLatLngs.size() == expectedMarkerDocumentCount) {
+              addNearestMarkersToMap();
+            }
           }
         })
         .addOnFailureListener(e -> Log.e(TAG, "Could not retrieve all markers", e));
 
+  }
+
+  private void addNearestMarkersToMap() {
+    LatLngKDTree latLngKDTree = new LatLngKDTree(allMapMarkerLatLngs);
+    List<LatLng> nearestMarkers = latLngKDTree.findNearestMarkers(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), SHOW_MARKER_WITHIN_RADIUS);
+    for (LatLng withinRadiusMarker :
+        nearestMarkers) {
+      int index = allMapMarkerLatLngs.indexOf(withinRadiusMarker);
+
+      String title = allMarkerDocuments.get(index).getTitle();
+      String description = allMarkerDocuments.get(index).getDescription();
+
+      com.google.android.gms.maps.model.Marker mapMarker = map.addMarker(new MarkerOptions()
+          .position(withinRadiusMarker)
+          .title(title)
+          .snippet(description));
+      mapMarker.setTag(allMarkerDocuments.get(index));
+      Log.i(TAG, "Successfully added marker to map");
+    }
   }
 
   @Override
