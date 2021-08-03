@@ -117,10 +117,14 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     allMarkerDocuments = new ArrayList<>();
 
     btnDoneSettingLoc.setOnClickListener(v -> {
-      double[] latLng = {placedMarker.getPosition().latitude, placedMarker.getPosition().longitude};
       Intent returnIntent = new Intent();
-      returnIntent.putExtra(getString(R.string.new_marker_latlng), latLng);
-      setResult(Activity.RESULT_OK, returnIntent);
+      if (placedMarker != null) {
+        double[] latLng = {placedMarker.getPosition().latitude, placedMarker.getPosition().longitude};
+        returnIntent.putExtra(getString(R.string.new_marker_latlng), latLng);
+        setResult(Activity.RESULT_OK, returnIntent);
+      } else {
+        setResult(Activity.RESULT_CANCELED,returnIntent);
+      }
       finish();
     });
 
@@ -170,11 +174,9 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     map = googleMap;
     if (googleMap != null) {
       // Map is ready
-      //Toast.makeText(this, "Map Fragment was loaded properly!", Toast.LENGTH_SHORT).show();
 
       MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
       MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
-
 
       if (getCallingActivity() != null) {
         if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
@@ -229,8 +231,6 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
           for (DocumentSnapshot documentSnapshot : queryDocumentSnapshots.getDocuments()) {
             Marker retrievedMarker = documentSnapshot.toObject(Marker.class);
 
-            String title = retrievedMarker.getTitle();
-            String description = retrievedMarker.getDescription();
             allMarkerDocuments.add(retrievedMarker);
 
             Double lat = (Double) retrievedMarker.getLocation().get(Marker.KEY_LATITUDE);
@@ -322,11 +322,8 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     }
 
     mCurrentLocation = location;
-    String msg = "Updated Location: " +
-        Double.toString(location.getLatitude()) + "," +
-        Double.toString(location.getLongitude());
-    //Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    //displayLocation();
+    // Update nearest markers within specified radius
+    addNearestMarkersToMap();
   }
 
   private void displayLocation() {
@@ -348,8 +345,6 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   @Override
   protected void onResume() {
     super.onResume();
-
-    displayLocation();
 
     MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
   }

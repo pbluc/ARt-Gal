@@ -349,7 +349,6 @@ public class AddMarkerActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not upload updated uri to Storage", e));
           } else {
             Log.i(TAG, "onDelete: Could not delete previous file from storage", task.getException());
-            // TODO: Rollback updates made to document
           }
         });
   }
@@ -369,7 +368,10 @@ public class AddMarkerActivity extends AppCompatActivity {
     augmentedObj.put(Marker.KEY_URI, augmentedObjUri.toString());
     augmentedObj.put(Marker.KEY_FILENAME, currentUser.getUid() + getFileName(augmentedObjUri));
 
-    if (!title.isEmpty() && !description.isEmpty() && currentUserDoc != null && referenceImgUri != null && augmentedObjUri != null) { // TODO: Complete check for marker location fields
+    if (!title.isEmpty() && !description.isEmpty() &&
+        currentUserDoc != null &&
+        referenceImgUri != null && augmentedObjUri != null &&
+        markerLoc == null && rbAddLocation.isChecked() && rbAddLocation.isSelected()) {
       Marker marker = new Marker();
       marker.setTitle(title);
       marker.setDescription(description);
@@ -379,7 +381,7 @@ public class AddMarkerActivity extends AppCompatActivity {
       marker.setMarkerImg(markerImg);
       marker.setAugmentedObj(augmentedObj);
 
-      if (markerLoc != null) {
+      if (markerLoc != null && rbAddLocation.isChecked() && rbAddLocation.isSelected()) {
         Map<String, Object> location = new HashMap<>();
         location.put(Marker.KEY_LATITUDE, markerLoc.latitude);
         location.put(Marker.KEY_LONGITUDE, markerLoc.longitude);
@@ -479,7 +481,7 @@ public class AddMarkerActivity extends AppCompatActivity {
 
                       String checkFlag = getIntent().getStringExtra(getString(R.string.flag));
                       Intent intent;
-                      if (checkFlag.equals(getString(R.string.uploaded_markers_activity))) {
+                      if (checkFlag != null && checkFlag.equals(getString(R.string.uploaded_markers_activity))) {
                         // Came from UploadedMarkersActivity
                         intent = new Intent();
                         Log.i(TAG, "marker id to uploaded markers: " + markerId);
@@ -491,21 +493,11 @@ public class AddMarkerActivity extends AppCompatActivity {
                       }
                       finish();
                     })
-                    .addOnFailureListener(new OnFailureListener() {
-                      @Override
-                      public void onFailure(@NonNull Exception e) {
-                        Log.e(TAG, "Error updating marker document", e);
-                      }
-                    });
+                    .addOnFailureListener(e -> Log.e(TAG, "Error updating marker document", e));
               })
               .addOnFailureListener(e -> Log.e(TAG, "Error updating user document", e));
         })
-        .addOnFailureListener(new OnFailureListener() {
-          @Override
-          public void onFailure(@NonNull Exception e) {
-            Log.e(TAG, "onFailure: could not get download url of newly uploaded reference image");
-          }
-        });
+        .addOnFailureListener(e -> Log.e(TAG, "onFailure: could not get download url of newly uploaded reference image"));
   }
 
   private void deleteCreatedMarkerDocument(DocumentReference currentUserDoc, String markerId) {

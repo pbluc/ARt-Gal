@@ -30,6 +30,7 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -124,6 +125,10 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     WriteBatch deleteBatch = firebaseFirestore.batch();
     List<Marker> selected = getSelectedItems();
+    List<Integer> indicesToRemoveFromAdapter = new ArrayList<>();
+
+    Log.i(TAG, "Selected items before removing: " + selected);
+    Log.i(TAG, "Marker adapter list before removing: " + markers);
 
     StorageReference referenceImgsRef = storageReference.child(getString(R.string.reference_images_ref));
     StorageReference augmentedObjsRef = storageReference.child(getString(R.string.augmented_object_ref));
@@ -145,10 +150,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
       // Update list and notify adapter
       int indexRemove = markers.indexOf(selectedMarker);
-      // TODO: Determine if this needs to be placed here or elsewhere
-      selected.remove(selectedMarker);
-      markers.remove(indexRemove);
-      adapter.notifyItemRemoved(indexRemove);
+      indicesToRemoveFromAdapter.add(indexRemove);
 
       // Delete files in Storage
       referenceImgsRef
@@ -178,12 +180,36 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
           // Refresh RecyclerView contents
           fetchUploadedMarkersAsync();
 
-          // TODO: Update the current user's user document in Firestore
+          // Update the adapter and list
+          for (int i:
+               indicesToRemoveFromAdapter) {
+            markers.remove(i);
+            adapter.notifyItemRemoved(i);
+          }
+          Log.i(TAG, "Selected items after removing: " + selected);
+          Log.i(TAG, "Marker adapter list after removing: " + markers);
+
+          // Update the current user's user document in Firestore
+          updateUserDocumentUpdatedAtField();
 
           Toast.makeText(UploadedMarkersActivity.this, "Successfully deleted selected markers!", Toast.LENGTH_SHORT).show();
         })
         .addOnFailureListener(e -> Log.e(TAG, "Could not delete all selected documents", e));
 
+  }
+
+  private void updateUserDocumentUpdatedAtField() {
+    firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(currentUser.getUid())
+        .update(User.KEY_UPDATED_AT, FieldValue.serverTimestamp())
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            Log.i(TAG, "onSuccess: Updated the updatedAt field on user document after removing selected uploaded markers");
+          } else {
+            Log.i(TAG, "onFailure: Could not update user document after removing selected markers", task.getException());
+          }
+        });
   }
 
   private void queryMarkers() {
