@@ -15,7 +15,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.fbu.pbluc.artgal.fragments.CustomArFragment;
-import com.fbu.pbluc.artgal.helpers.VideoRecorder;
+import com.fbu.pbluc.artgal.helpers.MyVideoRecorder;
 
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.sceneform.AnchorNode;
@@ -36,7 +36,7 @@ public class ArViewActivity extends AppCompatActivity {
   private ImageView ivVideoRecording;
   private ImageView ivAutoScaleModel;
 
-  private VideoRecorder videoRecorder;
+  private MyVideoRecorder myVideoRecorder;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -56,15 +56,15 @@ public class ArViewActivity extends AppCompatActivity {
     arFragment.transformableNode.getScaleController().setMinScale(MIN_SCALE);
 
     // Create a new video recorder instance.
-    videoRecorder = new VideoRecorder();
+    myVideoRecorder = new MyVideoRecorder();
     // Specify the AR scene view to be recorded.
-    videoRecorder.setSceneView(arFragment.getArSceneView());
+    myVideoRecorder.setSceneView(arFragment.getArSceneView());
     // Set video quality and recording orientation to match that of the device.
     int orientation = getResources().getConfiguration().orientation;
-    videoRecorder.setVideoQuality(CamcorderProfile.QUALITY_2160P, orientation);
+    myVideoRecorder.setVideoQuality(CamcorderProfile.QUALITY_2160P, orientation);
 
     ivVideoRecording.setOnClickListener(v -> {
-      boolean recording = videoRecorder.onToggleRecord();
+      boolean recording = myVideoRecorder.onToggleRecording();
       if(recording) {
         // Recording has started
         ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_stop_recording));

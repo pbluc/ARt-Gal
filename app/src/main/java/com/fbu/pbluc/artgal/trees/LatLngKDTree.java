@@ -1,4 +1,4 @@
-package com.fbu.pbluc.artgal;
+package com.fbu.pbluc.artgal.trees;
 
 import com.google.android.gms.maps.model.LatLng;
 
