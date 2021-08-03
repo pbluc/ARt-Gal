@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,10 +19,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.DataSource;
+import com.bumptech.glide.load.engine.GlideException;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -71,6 +77,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private ImageView ivPreview3dModel;
   private LinearLayout deleteMarkerLayoutContainer;
   private LinearLayout editMarkerLayoutContainer;
+  private ProgressBar progressBarLoading;
 
   private Marker marker;
 
@@ -97,6 +104,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     ivPreview3dModel = findViewById(R.id.ivPreview3dModel);
     deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
     editMarkerLayoutContainer = findViewById(R.id.editMarkerLayoutContainer);
+    progressBarLoading = findViewById(R.id.pbLoading);
 
     String userUid = getIntent().getStringExtra(getString(R.string.user_marker_uid));
     String markerUid = getIntent().getStringExtra(getString(R.string.clicked_marker_uid));
@@ -197,7 +205,22 @@ public class MarkerDetailsActivity extends AppCompatActivity {
           markerImgReference
               .getDownloadUrl()
               .addOnSuccessListener(uri -> {
-                Glide.with(MarkerDetailsActivity.this).load(uri).into(ivReferenceImageMedia);
+                Glide.with(MarkerDetailsActivity.this)
+                    .load(uri)
+                    .listener(new RequestListener<Drawable>() {
+                      @Override
+                      public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<Drawable> target, boolean isFirstResource) {
+                        progressBarLoading.setVisibility(View.GONE);
+                        return false;
+                      }
+
+                      @Override
+                      public boolean onResourceReady(Drawable resource, Object model, Target<Drawable> target, DataSource dataSource, boolean isFirstResource) {
+                        progressBarLoading.setVisibility(View.GONE);
+                        return false;
+                      }
+                    })
+                    .into(ivReferenceImageMedia);
                 Glide.with(MarkerDetailsActivity.this).load(uri).into(ivOriginalReferenceImageMedia);
               })
               .addOnFailureListener(e -> Log.e(TAG, "Could not get download url of marker img", e));
@@ -236,6 +259,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   }
 
   private void deleteMarkerFilesFromStorage() {
+    progressBarLoading.setVisibility(View.VISIBLE);
     // Delete the file
     markerImgReference
         .delete()
@@ -261,6 +285,9 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     markerRef
         .delete()
         .addOnSuccessListener(unused -> {
+          progressBarLoading.setVisibility(View.GONE);
+          Toast.makeText(this, "Uploaded marker successfully deleted", Toast.LENGTH_SHORT).show();
+
           Log.i(TAG, "Marker document successfully deleted!");
           goToUploadedMarkersActivity(deletedMarkerId);
         })
@@ -269,7 +296,6 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
   private void goToUploadedMarkersActivity(String deletedMarkerId) {
     Intent i = new Intent();
-    i.putExtra(getString(R.string.deleted_marker_uid), deletedMarkerId);
     i.putExtra(getString(R.string.deleted_marker_uid), deletedMarkerId);
     setResult(RESULT_OK, i);
     finish();
@@ -292,6 +318,8 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   }
 
   private void saveImageToGallery() {
+    progressBarLoading.setVisibility(View.VISIBLE);
+
     // Get the image from the ImageView
     BitmapDrawable markerImg = (BitmapDrawable) ivOriginalReferenceImageMedia.getDrawable();
     Bitmap markerImgBitmap = markerImg.getBitmap();
@@ -329,7 +357,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     intent.setData(Uri.fromFile(outFile));
     this.sendBroadcast(intent);
 
-
+    progressBarLoading.setVisibility(View.GONE);
     Toast.makeText(this, "Image saved to gallery!", Toast.LENGTH_SHORT).show();
     Log.i(TAG, "Saved image to gallery");
   }

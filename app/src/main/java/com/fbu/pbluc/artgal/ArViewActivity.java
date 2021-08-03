@@ -5,6 +5,7 @@ import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.Manifest;
 
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.media.CamcorderProfile;
 import android.os.AsyncTask;
@@ -22,6 +23,8 @@ import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.HitTestResult;
 import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.ux.TransformableNode;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import static com.fbu.pbluc.artgal.fragments.CustomArFragment.MAX_SCALE;
 import static com.fbu.pbluc.artgal.fragments.CustomArFragment.MIN_SCALE;
@@ -44,8 +47,8 @@ public class ArViewActivity extends AppCompatActivity {
     setContentView(R.layout.activity_ar_view);
 
     arFragment = (CustomArFragment) getSupportFragmentManager().findFragmentById(R.id.ar_fragment);
-    arFragment.getPlaneDiscoveryController().hide();
-    arFragment.getPlaneDiscoveryController().setInstructionView(null);
+    //arFragment.getPlaneDiscoveryController().hide();
+    //arFragment.getPlaneDiscoveryController().setInstructionView(null);
 
     ivVideoRecording = findViewById(R.id.ivVideoRecording);
     ivAutoScaleModel = findViewById(R.id. ivAutoScaleModel);
@@ -148,4 +151,19 @@ public class ArViewActivity extends AppCompatActivity {
     super.onDestroy();
   }
 
+  @Override
+  protected void onStart() {
+    super.onStart();
+    // Check if user is signed in (non-null) and update UI accordingly.
+    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    if (currentUser == null) {
+      goToLoginActivity();
+    }
+  }
+
+  private void goToLoginActivity() {
+    Intent i = new Intent(this, LoginActivity.class);
+    startActivity(i);
+    finish();
+  }
 }

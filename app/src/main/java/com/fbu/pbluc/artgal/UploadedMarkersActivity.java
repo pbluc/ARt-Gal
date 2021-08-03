@@ -15,6 +15,7 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
@@ -49,12 +50,13 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   private static final int NEW_MARKER_REQUEST_CODE = 20;
   private static final int GO_TO_MARKER_DETAILS_REQUEST_CODE = 30;
-  public final int QUERY_LIMIT = 8;
+  public final int QUERY_LIMIT = 6;
 
   private RecyclerView rvMarkers;
   private ImageView ivAddMarker;
   private Button btnDeleteSelectedMarkers;
   private SwipeRefreshLayout swipeContainer;
+  private ProgressBar progressBarLoading;
 
   private EndlessRecyclerViewScrollListener scrollListener;
 
@@ -89,16 +91,9 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     ivAddMarker = findViewById(R.id.ivAddMarker);
     btnDeleteSelectedMarkers = findViewById(R.id.btnDeleteSelectedMarkers);
     swipeContainer = findViewById(R.id.swipeContainer);
+    progressBarLoading = findViewById(R.id.pbLoading);
 
-    // Initialize markers
-    markers = new CopyOnWriteArrayList<>();
-    // Create adapter
-    adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
-    // Attach the adapter to the recyclerview to populate items
-    rvMarkers.setAdapter(adapter);
     LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
-    // Set layout manager to position the items
-    rvMarkers.setLayoutManager(linearLayoutManager);
 
     scrollListener = new EndlessRecyclerViewScrollListener(linearLayoutManager) {
       @Override
@@ -107,6 +102,16 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         loadNextDataFromDatabase();
       }
     };
+    rvMarkers.addOnScrollListener(scrollListener);
+
+    // Initialize markers
+    markers = new CopyOnWriteArrayList<>();
+    // Create adapter
+    adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
+    // Attach the adapter to the recyclerview to populate items
+    rvMarkers.setAdapter(adapter);
+    // Set layout manager to position the items
+    rvMarkers.setLayoutManager(linearLayoutManager);
 
     swipeContainer.setOnRefreshListener(() -> fetchUploadedMarkersAsync());
 
@@ -114,12 +119,13 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
     btnDeleteSelectedMarkers.setOnClickListener(v -> deleteSelectedMarkers());
 
-    rvMarkers.addOnScrollListener(scrollListener);
-
+    progressBarLoading.setVisibility(ProgressBar.VISIBLE);
     queryMarkers();
   }
 
   private void deleteSelectedMarkers() {
+    progressBarLoading.setVisibility(ProgressBar.VISIBLE);
+
     // Disable user interaction
     getWindow().setFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE, WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
 
@@ -192,6 +198,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
           // Update the current user's user document in Firestore
           updateUserDocumentUpdatedAtField();
 
+          progressBarLoading.setVisibility(ProgressBar.GONE);
           Toast.makeText(UploadedMarkersActivity.this, "Successfully deleted selected markers!", Toast.LENGTH_SHORT).show();
         })
         .addOnFailureListener(e -> Log.e(TAG, "Could not delete all selected documents", e));
@@ -231,14 +238,16 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
           } else {
             Log.e(TAG, "Error getting marker documents", task.getException());
           }
+          progressBarLoading.setVisibility(ProgressBar.GONE);
         });
   }
 
   private void loadNextDataFromDatabase() {
     // Send the request
+    Log.i(TAG, "markers before scrolling: " + markers);
     markersRef
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
-        .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 1).getCreatedAt())
+        .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 2).getCreatedAt())
         .limit(QUERY_LIMIT)
         .get()
         .addOnCompleteListener(task -> {
@@ -392,4 +401,18 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     return selectedItems;
   }
 
+  @Override
+  protected void onStart() {
+    super.onStart();
+    FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+    if (currentUser == null) {
+      goToLoginActivity();
+    }
+  }
+
+  private void goToLoginActivity() {
+    Intent i = new Intent(this, LoginActivity.class);
+    startActivity(i);
+    finish();
+  }
 }

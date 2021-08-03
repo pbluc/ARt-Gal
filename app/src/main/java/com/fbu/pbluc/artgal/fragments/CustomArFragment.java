@@ -112,6 +112,8 @@ public class CustomArFragment extends ArFragment {
   }
 
   public void setUpImageDatabase(Session session) {
+    this.getPlaneDiscoveryController().show();
+
     firebaseFirestore = FirebaseFirestore.getInstance();
 
     augmentedImageDatabase = new AugmentedImageDatabase(session);
@@ -173,8 +175,12 @@ public class CustomArFragment extends ArFragment {
   public void onUpdate(FrameTime frameTime) {
     Frame frame = this.getArSceneView().getArFrame();
     Collection<AugmentedImage> images = frame.getUpdatedTrackables(AugmentedImage.class);
+
     for (AugmentedImage image : images) {
       if (image.getTrackingState() == TrackingState.TRACKING && image.getTrackingMethod() == AugmentedImage.TrackingMethod.FULL_TRACKING) {
+        this.getPlaneDiscoveryController().hide();
+        this.getPlaneDiscoveryController().setInstructionView(null);
+
         Log.i(TAG, "Tracked image file name: " + image.getName());
         trackedMarkerDoc = firebaseFirestore
             .collection(User.KEY_USERS)

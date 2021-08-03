@@ -16,6 +16,11 @@ import java.util.List;
 
 public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHolder> {
 
+  // Two view types which will be used to determine whether a row should be displaying
+  // data or a Progressbar
+  public static final int VIEW_TYPE_LOADING = 0;
+  public static final int VIEW_TYPE_ITEM = 1;
+
   private List<Marker> mMarkers;
   private Context mContext;
 
@@ -30,14 +35,30 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
   @NonNull
   @Override
   public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-    View view = LayoutInflater.from(mContext).inflate(R.layout.item_marker, parent, false);
-    return new ViewHolder(view);
+    View view = null;
+    if (viewType == VIEW_TYPE_ITEM) {
+      view = LayoutInflater.from(mContext).inflate(R.layout.item_marker, parent, false);
+      return new DataViewHolder(view);
+    } else {
+      view = LayoutInflater.from(mContext).inflate(R.layout.item_progress, parent, false);
+      return new ProgressViewHolder(view);
+    }
   }
 
   @Override
-  public void onBindViewHolder(@NonNull MarkersAdapter.ViewHolder holder, int position) {
-    Marker marker = mMarkers.get(position);
-    holder.bind(marker);
+  public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    if (holder instanceof DataViewHolder) {
+      Marker marker = mMarkers.get(position);
+      ((DataViewHolder) holder).bind(marker);
+    }
+  }
+
+  @Override
+  public int getItemViewType(int position) {
+    if (mMarkers.get(position) != null) {
+      return VIEW_TYPE_ITEM;
+    }
+    return VIEW_TYPE_LOADING;
   }
 
   @Override
@@ -57,14 +78,23 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     notifyDataSetChanged();
   }
 
-  public class ViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener, View.OnLongClickListener {
+  public void addNullData() {
+    mMarkers.add(null);
+    notifyItemInserted(mMarkers.size() - 1);
+  }
 
+  public void removeNull() {
+    mMarkers.remove(mMarkers.size() - 1);
+    notifyItemRemoved(mMarkers.size());
+  }
+
+  class DataViewHolder extends ViewHolder implements View.OnClickListener, View.OnLongClickListener {
     private TextView tvTitle;
     private TextView tvDescription;
     private TextView tvAugmentedObjectFileName;
     private TextView tvCreatedAt;
 
-    public ViewHolder(@NonNull View itemView) {
+    public DataViewHolder(@NonNull View itemView) {
       super(itemView);
 
       tvTitle = itemView.findViewById(R.id.tvTitle);
@@ -102,6 +132,18 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
           break;
       }
       return true;
+    }
+  }
+
+  class ProgressViewHolder extends ViewHolder {
+    public ProgressViewHolder(View itemView) {
+      super(itemView);
+    }
+  }
+
+  public class ViewHolder extends RecyclerView.ViewHolder {
+    public ViewHolder(@NonNull View itemView) {
+      super(itemView);
     }
   }
 

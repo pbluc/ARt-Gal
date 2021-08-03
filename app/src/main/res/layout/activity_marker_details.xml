@@ -33,6 +33,15 @@
         android:scaleType="centerCrop"
         android:layout_alignStart="@id/tvTitle"/>
 
+    <ProgressBar
+        android:id="@+id/pbLoading"
+        android:visibility="visible"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/ivReferenceImageMedia"
+        android:layout_marginTop="80dp"
+        android:layout_centerHorizontal="true"/>
+
     <ImageView
         android:id="@+id/ivOriginalReferenceImageMedia"
         android:layout_width="wrap_content"
@@ -177,5 +186,7 @@
             android:layout_gravity="center_horizontal"/>
 
     </LinearLayout>
+
+
 
 </RelativeLayout>

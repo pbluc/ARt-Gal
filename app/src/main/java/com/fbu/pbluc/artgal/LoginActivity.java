@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -27,6 +28,7 @@ public class LoginActivity extends AppCompatActivity {
   private EditText etPassword;
   private Button btnLogin;
   private Button btnCreateAccount;
+  private ProgressBar progressBarLoading;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -40,8 +42,11 @@ public class LoginActivity extends AppCompatActivity {
     etPassword = findViewById(R.id.etPassword);
     btnLogin = findViewById(R.id.btnLogin);
     btnCreateAccount = findViewById(R.id.btnCreateAccount);
+    progressBarLoading = findViewById(R.id.pbLoading);
 
     btnLogin.setOnClickListener(v -> {
+      progressBarLoading.setVisibility(ProgressBar.VISIBLE);
+
       String email = etEmail.getText().toString().trim();
       String password = etPassword.getText().toString().trim();
 
@@ -57,6 +62,8 @@ public class LoginActivity extends AppCompatActivity {
               // Log.i(TAG, "signInWthEmail:failure", task.getException());
               Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
+            progressBarLoading.setVisibility(ProgressBar.GONE);
+
             etEmail.setText("");
             etPassword.setText("");
           });

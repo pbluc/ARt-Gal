@@ -34,6 +34,8 @@ import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -151,12 +153,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       mapFragment = ((SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapFragment));
       // Check if we were successful in obtaining the map
       if (mapFragment != null) {
-        mapFragment.getMapAsync(new OnMapReadyCallback() {
-          @Override
-          public void onMapReady(GoogleMap googleMap) {
-            loadMap(googleMap);
-          }
-        });
+        mapFragment.getMapAsync(googleMap -> loadMap(googleMap));
       }
     }
   }
@@ -347,6 +344,16 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   @Override
   protected void onStart() {
     super.onStart();
+    FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+    if (currentUser == null) {
+      goToLoginActivity();
+    }
+  }
+
+  private void goToLoginActivity() {
+    Intent i = new Intent(this, LoginActivity.class);
+    startActivity(i);
+    finish();
   }
 
   /*

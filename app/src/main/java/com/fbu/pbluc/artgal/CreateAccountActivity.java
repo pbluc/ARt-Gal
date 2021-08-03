@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.fbu.pbluc.artgal.models.User;
@@ -38,6 +39,7 @@ public class CreateAccountActivity extends AppCompatActivity {
   private EditText etUsername;
   private Button btnLogin;
   private Button btnCreateAccount;
+  private ProgressBar progressBarLoading;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -56,10 +58,13 @@ public class CreateAccountActivity extends AppCompatActivity {
     etUsername = findViewById(R.id.etUsername);
     btnLogin = findViewById(R.id.btnLogin);
     btnCreateAccount = findViewById(R.id.btnCreateAccount);
+    progressBarLoading = findViewById(R.id.pbLoading);
 
     btnLogin.setOnClickListener(v -> goToLoginActivity());
 
     btnCreateAccount.setOnClickListener(v -> {
+      progressBarLoading.setVisibility(ProgressBar.VISIBLE);
+
       String email = etEmail.getText().toString().trim();
       String password = etPassword.getText().toString().trim();
       String fName = etFirstName.getText().toString().trim();
@@ -97,6 +102,8 @@ public class CreateAccountActivity extends AppCompatActivity {
               // Log.e(TAG, "createdUserWithEmail:failure", task.getException());
               Toast.makeText(CreateAccountActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
+            progressBarLoading.setVisibility(ProgressBar.GONE);
+
             etEmail.setText("");
             etPassword.setText("");
             etFirstName.setText("");

@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,6 +74,7 @@ public class AddMarkerActivity extends AppCompatActivity {
   private ImageView ivReferenceImage;
   private TextView tvSelectedAugmentedObject;
   private RadioButton rbAddLocation;
+  private ProgressBar progressBarLoading;
 
   private Uri referenceImgUri;
   private Uri augmentedObjUri;
@@ -106,6 +108,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     ivReferenceImage = findViewById(R.id.ivReferenceImage);
     tvSelectedAugmentedObject = findViewById(R.id.tvSelectedAugmentedObject);
     rbAddLocation = findViewById(R.id.rbAddLocation);
+    progressBarLoading = findViewById(R.id.pbLoading);
 
     userUidEditingMarker = getIntent().getStringExtra(getString(R.string.user_uid_editing_marker));
     markerUidEditingMarker = getIntent().getStringExtra(getString(R.string.marker_uid_editing_marker));
@@ -147,6 +150,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     btnFindAugmentedObject.setOnClickListener(v -> openFileChooser(v));
 
     btnSubmit.setOnClickListener(v -> {
+      progressBarLoading.setVisibility(ProgressBar.VISIBLE);
       if (getCallingActivity() != null && getCallingActivity().getClassName().equals(getString(R.string.marker_details_activity))) {
         updateCurrentMarkerDocument();
       } else {
@@ -320,6 +324,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     Intent returnIntent = new Intent();
     setResult(Activity.RESULT_OK, returnIntent);
 
+    progressBarLoading.setVisibility(ProgressBar.GONE);
     Toast.makeText(this, "Successfully updated existing marker!", Toast.LENGTH_SHORT).show();
 
     finish();
@@ -477,6 +482,7 @@ public class AddMarkerActivity extends AppCompatActivity {
 
                       Log.i(TAG, "Successfully updated both user and marker documents!");
 
+                      progressBarLoading.setVisibility(ProgressBar.GONE);
                       Toast.makeText(AddMarkerActivity.this, "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
 
                       String checkFlag = getIntent().getStringExtra(getString(R.string.flag));
