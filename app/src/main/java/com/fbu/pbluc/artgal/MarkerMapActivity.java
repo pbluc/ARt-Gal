@@ -32,6 +32,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -54,7 +56,10 @@ import static com.google.android.gms.location.LocationServices.getFusedLocationP
 public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.OnMarkerDragListener {
 
   private static final String TAG = "MarkerMapActivity";
+
   private static final double EPSILON = 0.0000000001;
+  private static final double MILES_TO_METERS_RATIO = 1609.34;
+
   private FirebaseFirestore firebaseFirestore;
 
   private ImageButton btnDoneSettingLoc;
@@ -132,7 +137,6 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         SHOW_MARKER_WITHIN_RADIUS = Double.parseDouble(etMarkersWithinRadius.getText().toString().trim());
         tvMarkersWithinRadius.setText(SHOW_MARKER_WITHIN_RADIUS + getString(R.string.miles));
 
-        map.clear();
         addNearestMarkersToMap();
 
         CHANGE_RADIUS_BTN_STATE--;
@@ -242,6 +246,8 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   }
 
   private void addNearestMarkersToMap() {
+    map.clear();
+
     LatLngKDTree latLngKDTree = new LatLngKDTree(allMapMarkerLatLngs);
     List<LatLng> nearestMarkers = latLngKDTree.findNearestMarkers(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), SHOW_MARKER_WITHIN_RADIUS);
     for (LatLng withinRadiusMarker :
@@ -260,6 +266,26 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         Log.i(TAG, "Successfully added marker to map");
       }
     }
+
+    // Instantiates a new CircleOptions object and defines the center and radius
+    CircleOptions circleOptions = new CircleOptions()
+        .center(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()))
+        .radius(SHOW_MARKER_WITHIN_RADIUS * MILES_TO_METERS_RATIO); // In meters
+
+    // Add the circle onto the map
+    Circle circle = map.addCircle(circleOptions);
+    map.animateCamera(CameraUpdateFactory.newLatLngZoom(circleOptions.getCenter(), getZoomLevel(circle)));
+  }
+
+  private int getZoomLevel(Circle circle) {
+    int zoomLevel = 17;
+    if (circle != null) {
+      double radius = circle.getRadius() + circle.getRadius() / 2;
+      double scale = radius / 500;
+
+      zoomLevel = (int) (16 - Math.log(scale) / Math.log(2));
+    }
+    return zoomLevel;
   }
 
   private int findIndexInAllLatLngs(LatLng withinRadiusMarker) {
@@ -332,10 +358,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     if (location == null) {
       return;
     }
-
     mCurrentLocation = location;
-    // Update nearest markers within specified radius
-    addNearestMarkersToMap();
   }
 
   private void displayLocation() {
