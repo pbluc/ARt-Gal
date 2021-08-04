@@ -70,10 +70,10 @@ public class ArViewActivity extends AppCompatActivity {
       boolean recording = myVideoRecorder.onToggleRecording();
       if(recording) {
         // Recording has started
-        ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_stop_recording));
+        ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_record));
       } else {
         // Recording has stopped
-        ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_start_recording));
+        ivVideoRecording.setImageDrawable(getResources().getDrawable(R.drawable.ic_record_circle_outline));
         Toast.makeText(ArViewActivity.this, "Video recording saved!", Toast.LENGTH_SHORT).show();
       }
     });

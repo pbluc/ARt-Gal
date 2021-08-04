@@ -8,26 +8,36 @@
 
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="wrap_content"
+        android:layout_width="367dp"
         android:layout_height="wrap_content"
         android:text="Jelly Fish Under Night Sea"
         android:textSize="20sp" />
 
     <TextView
         android:id="@+id/tvDescription"
-        android:layout_width="234dp"
+        android:layout_width="367dp"
         android:layout_height="wrap_content"
         android:layout_below="@id/tvTitle"
         android:layout_marginTop="-1dp"
         android:text="Acrylic art painting"
         android:textSize="15sp" />
 
+    <TextView
+        android:id="@+id/tvCreatedAt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Created 5h"
+        android:textSize="12sp"
+        android:layout_marginTop="17dp"
+        android:layout_below="@id/tvDescription" />
+
     <LinearLayout
         android:id="@+id/linearLayoutContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_toRightOf="@id/tvTitle"
-        android:layout_marginTop="25dp"
+        android:layout_toRightOf="@id/tvCreatedAt"
+        android:layout_below="@id/tvDescription"
+        android:layout_marginTop="10dp"
         android:layout_marginStart="25dp">
 
         <ImageView
@@ -47,14 +57,5 @@
             android:text="scene.gltf"
             android:textSize="16sp" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/tvCreatedAt"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Created 5h"
-        android:textSize="12sp"
-        android:layout_marginTop="10dp"
-        android:layout_below="@id/tvDescription" />
 
 </RelativeLayout>

@@ -16,7 +16,6 @@
         android:textSize="30sp"
         android:layout_centerHorizontal="true"/>
 
-
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"

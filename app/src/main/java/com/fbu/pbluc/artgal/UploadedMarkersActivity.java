@@ -381,7 +381,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   public void onListItemLongClick(int position, View view) {
     Marker longClickedMarker = markers.get(position);
     longClickedMarker.setSelected(!longClickedMarker.isSelected());
-    view.setBackgroundColor(longClickedMarker.isSelected() ? Color.GRAY : Color.BLACK);
+    view.setBackgroundColor(longClickedMarker.isSelected() ? Color.GRAY : Color.WHITE);
 
     if (getSelectedItems().size() > 0) {
       // Show view of delete all button

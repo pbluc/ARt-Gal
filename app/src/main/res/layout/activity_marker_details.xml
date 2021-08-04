@@ -2,9 +2,11 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:padding="20dp"
+    android:layout_gravity="center_horizontal"
+    android:layout_marginTop="50dp"
     tools:context=".MarkerDetailsActivity">
 
     <TextView
@@ -91,11 +93,11 @@
 
         <ImageView
             android:id="@+id/ivPreview3dModel"
-            android:layout_width="25dp"
-            android:layout_height="25dp"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
             android:layout_gravity="center_vertical"
             android:layout_marginRight="10dp"
-            android:src="@drawable/ic_preview_3d_model" />
+            android:src="@drawable/ic_eye_circle_outline" />
     </LinearLayout>
 
     <TextView
@@ -141,7 +143,7 @@
         android:id="@+id/deleteMarkerLayoutContainer"
         android:layout_below="@id/secondLinearLayoutContainer"
         android:layout_alignEnd="@id/ivReferenceImageMedia"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -149,9 +151,9 @@
         android:visibility="gone">
 
         <ImageView
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:src="@drawable/ic_delete_marker"
+            android:layout_width="37dp"
+            android:layout_height="37dp"
+            android:src="@drawable/ic_delete_outline"
             android:layout_gravity="center_horizontal"/>
 
         <TextView
@@ -166,7 +168,7 @@
         android:id="@+id/editMarkerLayoutContainer"
         android:layout_below="@id/secondLinearLayoutContainer"
         android:layout_alignStart="@id/ivReferenceImageMedia"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="30dp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
@@ -174,9 +176,9 @@
         android:visibility="gone">
 
         <ImageView
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:src="@drawable/ic_edit_marker"
+            android:layout_width="37dp"
+            android:layout_height="37dp"
+            android:src="@drawable/ic_circle_edit_outline"
             android:layout_gravity="center_horizontal"/>
 
         <TextView

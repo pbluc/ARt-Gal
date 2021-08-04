@@ -15,9 +15,9 @@
 
     <ImageView
         android:id="@+id/ivVideoRecording"
-        android:src="@drawable/ic_start_recording"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
+        android:src="@drawable/ic_record_circle_outline"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
         android:layout_marginBottom="30dp"
         android:clickable="true"
         android:layout_alignParentBottom="true"

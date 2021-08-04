@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 
 import com.google.ar.core.ArCoreApk;
 import com.google.firebase.auth.FirebaseAuth;
@@ -19,11 +21,11 @@ public class MainActivity extends AppCompatActivity {
 
   private FirebaseAuth firebaseAuth;
 
-  private Button btnLogout;
-  private Button btnUploadMarker;
-  private Button btnViewMarker;
-  private Button btnArView;
-  private Button btnMarkerMap;
+  private ImageView ivLogout;
+  private ImageButton btnUploadMarker;
+  private ImageButton btnViewMarker;
+  private ImageButton btnArView;
+  private ImageButton btnMarkerMap;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -32,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
 
     firebaseAuth = FirebaseAuth.getInstance();
 
-    btnLogout = findViewById(R.id.btnLogout);
+    ivLogout = findViewById(R.id.ivLogout);
     btnUploadMarker = findViewById(R.id.btnUploadMarker);
     btnViewMarker = findViewById(R.id.btnViewMarkers);
     btnArView = findViewById(R.id.btnArView);
@@ -41,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
     // Enable AR-related functionality on ARCore supported devices only.
     maybeEnableArButton();
 
-    btnLogout.setOnClickListener(v -> logoutUser());
+    ivLogout.setOnClickListener(v -> logoutUser());
 
     btnUploadMarker.setOnClickListener(v -> goToUploadActivity());
 

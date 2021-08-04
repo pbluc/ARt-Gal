@@ -12,6 +12,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.fbu.pbluc.artgal.adapters.CustomWindowAdapter;
@@ -55,7 +56,7 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   private static final String TAG = "MarkerMapActivity";
   private FirebaseFirestore firebaseFirestore;
 
-  private Button btnDoneSettingLoc;
+  private ImageButton btnDoneSettingLoc;
   private Button btnChangeMarkerViewRadius;
   private TextView tvMarkersWithinRadius;
   private EditText etMarkersWithinRadius;
@@ -169,19 +170,20 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
 
       if (getCallingActivity() != null) {
         if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
-          map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
+          //map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
 
           btnChangeMarkerViewRadius.setVisibility(View.VISIBLE);
           tvMarkersWithinRadius.setVisibility(View.VISIBLE);
 
           addAllMarkerDocs();
 
+          /*
           // Attach marker click listener to map here
           map.setOnMarkerClickListener(marker -> {
             // Handle marker click here
             Marker clicked = (Marker) marker.getTag();
             return true;
-          });
+          });*/
 
         } else if (getCallingActivity().getClassName().equals(getString(R.string.add_marker_activity))) {
           btnDoneSettingLoc.setVisibility(View.VISIBLE);
