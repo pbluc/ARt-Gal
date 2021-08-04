@@ -3,12 +3,17 @@ package com.fbu.pbluc.artgal;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.text.Html;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.google.ar.core.ArCoreApk;
 import com.google.firebase.auth.FirebaseAuth;
@@ -26,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
   private ImageButton btnViewMarker;
   private ImageButton btnArView;
   private ImageButton btnMarkerMap;
+  private TextView arCoreUserPrivacyDisclosure;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +45,15 @@ public class MainActivity extends AppCompatActivity {
     btnViewMarker = findViewById(R.id.btnViewMarkers);
     btnArView = findViewById(R.id.btnArView);
     btnMarkerMap = findViewById(R.id.btnMarkerMap);
+    arCoreUserPrivacyDisclosure = findViewById(R.id.ArCoreUserPrivacyDisclosure);
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      arCoreUserPrivacyDisclosure.setText(Html.fromHtml(getString(R.string.ar_core_user_privacy_disclosure), Html.FROM_HTML_MODE_COMPACT));
+    } else {
+      arCoreUserPrivacyDisclosure.setText(Html.fromHtml(getString(R.string.ar_core_user_privacy_disclosure)));
+    }
+    Linkify.addLinks(arCoreUserPrivacyDisclosure, Linkify.ALL);
+    arCoreUserPrivacyDisclosure.setMovementMethod(LinkMovementMethod.getInstance());
 
     // Enable AR-related functionality on ARCore supported devices only.
     maybeEnableArButton();
