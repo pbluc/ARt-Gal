@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_upload"
+        android:enabled="true"
+        android:icon="@drawable/ic_plus_circle_outline"
+        android:title="@string/upload_marker"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_markers"
+        android:enabled="true"
+        android:icon="@drawable/ic_checkbox_multiple_blank_outline"
+        android:title="@string/view_markers"
+        app:showAsAction="always" />
+    <item
+        android:id="@+id/action_ar"
+        android:enabled="true"
+        android:icon="@drawable/ic_google_ar"
+        android:title="@string/open_ar"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_map"
+        android:enabled="true"
+        android:icon="@drawable/ic_google_map"
+        android:title="@string/marker_map"
+        app:showAsAction="always" />
+</menu>
