@@ -59,7 +59,7 @@ public class CustomArFragment extends ArFragment {
 
   public static final float MAX_SCALE = 10f;
   public static final float MIN_SCALE = 0.01f;
-  public static boolean fitModelToView = true;
+  public boolean fitModelToView = true;
 
   private FirebaseStorage firebaseStorage;
   private StorageReference storageReference;
@@ -287,6 +287,11 @@ public class CustomArFragment extends ArFragment {
 
       unscaledAnchorNode.setAnchor(anchor);
       unscaledAnchorNode.setParent(this.getArSceneView().getScene());
+
+      // TODO: Disable transformable node on unscaled anchor node
+      transformableNode.setParent(unscaledAnchorNode);
+      transformableNode.setRenderable(modelRenderable);
+      transformableNode.select();
     }
   }
 

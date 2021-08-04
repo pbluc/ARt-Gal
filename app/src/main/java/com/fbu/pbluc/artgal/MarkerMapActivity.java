@@ -54,6 +54,7 @@ import static com.google.android.gms.location.LocationServices.getFusedLocationP
 public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.OnMarkerDragListener {
 
   private static final String TAG = "MarkerMapActivity";
+  private static final double EPSILON = 0.0000000001;
   private FirebaseFirestore firebaseFirestore;
 
   private ImageButton btnDoneSettingLoc;
@@ -245,18 +246,38 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     List<LatLng> nearestMarkers = latLngKDTree.findNearestMarkers(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()), SHOW_MARKER_WITHIN_RADIUS);
     for (LatLng withinRadiusMarker :
         nearestMarkers) {
-      int index = allMapMarkerLatLngs.indexOf(withinRadiusMarker);
+      int index = findIndexInAllLatLngs(withinRadiusMarker);
 
-      String title = allMarkerDocuments.get(index).getTitle();
-      String description = allMarkerDocuments.get(index).getDescription();
+      if (index != -1) {
+        String title = allMarkerDocuments.get(index).getTitle();
+        String description = allMarkerDocuments.get(index).getDescription();
 
-      com.google.android.gms.maps.model.Marker mapMarker = map.addMarker(new MarkerOptions()
-          .position(withinRadiusMarker)
-          .title(title)
-          .snippet(description));
-      mapMarker.setTag(allMarkerDocuments.get(index));
-      Log.i(TAG, "Successfully added marker to map");
+        com.google.android.gms.maps.model.Marker mapMarker = map.addMarker(new MarkerOptions()
+            .position(withinRadiusMarker)
+            .title(title)
+            .snippet(description));
+        mapMarker.setTag(allMarkerDocuments.get(index));
+        Log.i(TAG, "Successfully added marker to map");
+      }
     }
+  }
+
+  private int findIndexInAllLatLngs(LatLng withinRadiusMarker) {
+    for (int i = 0; i < allMapMarkerLatLngs.size(); i++) {
+      if (isEqual(withinRadiusMarker.latitude, allMapMarkerLatLngs.get(i).latitude) &&
+          isEqual(withinRadiusMarker.longitude, allMapMarkerLatLngs.get(i).longitude)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  private boolean isEqual(double d1, double d2) {
+    return d1 == d2 || isRelativelyEqual(d1,d2);
+  }
+
+  private boolean isRelativelyEqual(double d1, double d2) {
+    return EPSILON > Math.abs(d1 - d2) / Math.max(Math.abs(d1), Math.abs(d2));
   }
 
   @Override

@@ -376,7 +376,7 @@ public class AddMarkerActivity extends AppCompatActivity {
     if (!title.isEmpty() && !description.isEmpty() &&
         currentUserDoc != null &&
         referenceImgUri != null && augmentedObjUri != null &&
-        markerLoc == null && rbAddLocation.isChecked() && rbAddLocation.isSelected()) {
+        !(markerLoc == null && rbAddLocation.isChecked() && rbAddLocation.isSelected())) { //
       Marker marker = new Marker();
       marker.setTitle(title);
       marker.setDescription(description);

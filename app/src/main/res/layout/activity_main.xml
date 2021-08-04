@@ -7,51 +7,47 @@
     android:layout_margin="16dp"
     tools:context=".MainActivity">
 
+    <ImageView
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:id="@+id/ivLogout"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="10dp"
+        android:layout_marginTop="10dp"
+        android:src="@drawable/ic_logout"/>
 
     <LinearLayout
         android:layout_centerInParent="true"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:padding="80dp"
         android:orientation="vertical">
 
-        <TextView
-            android:id="@+id/tvUserFullName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hello World!"
-            android:layout_gravity="center_horizontal"/>
-
-        <Button
-            android:id="@+id/btnLogout"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/logout"
-            android:layout_marginTop="10dp"/>
-
-        <Button
+        <ImageButton
             android:id="@+id/btnUploadMarker"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/upload_marker"/>
+            android:layout_height="50dp"
+            android:src="@drawable/ic_plus_circle_outline"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnViewMarkers"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/view_markers"/>
+            android:layout_height="50dp"
+            android:src="@drawable/ic_checkbox_multiple_blank_outline"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnArView"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/open_ar"
-            android:visibility="gone"/>
+            android:layout_height="50dp"
+            android:src="@drawable/ic_google_ar"
+            android:visibility="visible"/>
 
-        <Button
+        <ImageButton
             android:id="@+id/btnMarkerMap"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/marker_map"/>
+            android:layout_height="50dp"
+            android:src="@drawable/ic_google_map"/>
 
     </LinearLayout>
 
@@ -68,5 +64,15 @@
         android:textSize="10sp"
         android:textStyle="italic"
         />
+
+    <!--
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottom_navigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@id/ArCoreUserPrivacyDisclosure"
+        app:menu="@menu/menu_bottom_navigation" />
+        -->
 
 </RelativeLayout>

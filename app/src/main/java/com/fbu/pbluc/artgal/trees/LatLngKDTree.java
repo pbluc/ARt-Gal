@@ -1,10 +1,13 @@
 package com.fbu.pbluc.artgal.trees;
 
+import android.util.Log;
+
 import com.google.android.gms.maps.model.LatLng;
 
 import java.util.*;
 
 public class LatLngKDTree {
+
   private static final int K = 3; // 3-d tree
   private List<Node> nodes;
   private Node tree;
@@ -39,10 +42,10 @@ public class LatLngKDTree {
     List<LatLng> nearestMarkers = new ArrayList<>();
     int size = nodes.size();
     for (int i = 0; i < size; i++) {
-      Node node = findNearestMarker(tree, new Node(currentLocation), 0, withinRadius);
+      Node node = findNearestMarker(tree, new Node(currentLocation), 0);
       if (node != null) {
         if (node.calculateHaversineDistance(currentLocNode) <= withinRadius) {
-          nearestMarkers.add(new LatLng(node.location.latitude, node.location.longitude));
+          nearestMarkers.add(new LatLng(node.convertPointToLatLng().latitude, node.convertPointToLatLng().longitude));
         }
         deleteNode(tree, node.point);
       }
@@ -50,13 +53,13 @@ public class LatLngKDTree {
     return nearestMarkers;
   }
 
-  private static Node findNearestMarker(Node current, Node target, int depth, double radius) {
+  private static Node findNearestMarker(Node current, Node target, int depth) {
     int axis = depth % K;
     int direction = getComparator(axis).compare(target, current);
 
     Node next = (direction < 0) ? current.left : current.right;
     Node other = (direction < 0) ? current.right : current.left;
-    Node nearest = (next == null) ? current : findNearestMarker(next, target, depth + 1, radius);
+    Node nearest = (next == null) ? current : findNearestMarker(next, target, depth + 1);
 
     if (current.calculateEuclideanDistance(target) < nearest.calculateEuclideanDistance(target)) {
       nearest = current;
@@ -65,7 +68,7 @@ public class LatLngKDTree {
     if (other != null) {
       if (current.calculateAxisDistance(target, axis) < nearest.calculateEuclideanDistance(target)) {
 
-        Node possiblyNearer = findNearestMarker(other, target, depth + 1, radius);
+        Node possiblyNearer = findNearestMarker(other, target, depth + 1);
         if (possiblyNearer.calculateEuclideanDistance(target) < nearest.calculateEuclideanDistance(target)) {
           nearest = possiblyNearer;
         }
@@ -125,7 +128,6 @@ public class LatLngKDTree {
 
     // Current dimension is computed using current depth and total dimensions (k)
     int axis = depth % K;
-
 
     // Compare point with root with respect to current dimension
     if (axis == dimension) {
@@ -194,7 +196,6 @@ public class LatLngKDTree {
   class Node {
     Node left;
     Node right;
-    LatLng location;
     final double[] point = new double[K];
 
     public Node(double latitude, double longitude) {
@@ -205,7 +206,12 @@ public class LatLngKDTree {
 
     public Node(LatLng location) {
       this(location.latitude, location.longitude);
-      this.location = location;
+    }
+
+    public LatLng convertPointToLatLng() {
+      double latitude = Math.toDegrees(Math.asin(point[2]));
+      double longitude = Math.toDegrees(Math.atan2(point[1], point[0]));
+      return new LatLng(latitude, longitude);
     }
 
     public double calculateEuclideanDistance(Node other) {
@@ -222,15 +228,17 @@ public class LatLngKDTree {
     }
 
     public double calculateHaversineDistance(Node other) {
+      LatLng thisLoc = this.convertPointToLatLng();
+      LatLng otherLoc = other.convertPointToLatLng();
       // Distance between latitudes and longitudes
-      double dLat = Math.toRadians(other.location.latitude - this.location.latitude);
-      double dLon = Math.toRadians(other.location.longitude - this.location.longitude);
+      double dLat = Math.toRadians(otherLoc.latitude - thisLoc.latitude);
+      double dLon = Math.toRadians(otherLoc.longitude - thisLoc.longitude);
 
       // Apply the Haversine distance formulae
       double a = Math.pow(Math.sin(dLat / 2), 2) +
           Math.pow(Math.sin(dLon / 2), 2) *
-              Math.cos(Math.toRadians(this.location.latitude)) *
-              Math.cos(Math.toRadians(other.location.latitude));
+              Math.cos(Math.toRadians(thisLoc.latitude)) *
+              Math.cos(Math.toRadians(otherLoc.latitude));
       double rad = 6371;
       double c = 2 * Math.asin(Math.sqrt(a));
       return (rad * c) / 1.609344;
