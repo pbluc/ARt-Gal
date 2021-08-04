@@ -1,20 +1,15 @@
 package com.fbu.pbluc.artgal;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 
@@ -27,7 +22,7 @@ public class LoginActivity extends AppCompatActivity {
   private EditText etEmail;
   private EditText etPassword;
   private Button btnLogin;
-  private Button btnCreateAccount;
+  private TextView tvCreateAccount;
   private ProgressBar progressBarLoading;
 
   @Override
@@ -41,7 +36,7 @@ public class LoginActivity extends AppCompatActivity {
     etEmail = findViewById(R.id.etEmail);
     etPassword = findViewById(R.id.etPassword);
     btnLogin = findViewById(R.id.btnLogin);
-    btnCreateAccount = findViewById(R.id.btnCreateAccount);
+    tvCreateAccount = findViewById(R.id.tvCreateAccount);
     progressBarLoading = findViewById(R.id.pbLoading);
 
     btnLogin.setOnClickListener(v -> {
@@ -62,7 +57,7 @@ public class LoginActivity extends AppCompatActivity {
               // Log.i(TAG, "signInWthEmail:failure", task.getException());
               Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
-            progressBarLoading.setVisibility(ProgressBar.GONE);
+            progressBarLoading.setVisibility(ProgressBar.INVISIBLE);
 
             etEmail.setText("");
             etPassword.setText("");
@@ -70,7 +65,7 @@ public class LoginActivity extends AppCompatActivity {
 
     });
 
-    btnCreateAccount.setOnClickListener(v -> goToCreateAccountActivity());
+    tvCreateAccount.setOnClickListener(v -> goToCreateAccountActivity());
   }
 
   @Override

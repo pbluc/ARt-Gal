@@ -1,21 +1,16 @@
 package com.fbu.pbluc.artgal;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fbu.pbluc.artgal.models.User;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
@@ -37,7 +32,7 @@ public class CreateAccountActivity extends AppCompatActivity {
   private EditText etFirstName;
   private EditText etLastName;
   private EditText etUsername;
-  private Button btnLogin;
+  private TextView tvLogin;
   private Button btnCreateAccount;
   private ProgressBar progressBarLoading;
 
@@ -56,11 +51,11 @@ public class CreateAccountActivity extends AppCompatActivity {
     etFirstName = findViewById(R.id.etFirstName);
     etLastName = findViewById(R.id.etLastName);
     etUsername = findViewById(R.id.etUsername);
-    btnLogin = findViewById(R.id.btnLogin);
+    tvLogin = findViewById(R.id.tvLogin);
     btnCreateAccount = findViewById(R.id.btnCreateAccount);
     progressBarLoading = findViewById(R.id.pbLoading);
 
-    btnLogin.setOnClickListener(v -> goToLoginActivity());
+    tvLogin.setOnClickListener(v -> goToLoginActivity());
 
     btnCreateAccount.setOnClickListener(v -> {
       progressBarLoading.setVisibility(ProgressBar.VISIBLE);
@@ -102,7 +97,7 @@ public class CreateAccountActivity extends AppCompatActivity {
               // Log.e(TAG, "createdUserWithEmail:failure", task.getException());
               Toast.makeText(CreateAccountActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
-            progressBarLoading.setVisibility(ProgressBar.GONE);
+            progressBarLoading.setVisibility(ProgressBar.INVISIBLE);
 
             etEmail.setText("");
             etPassword.setText("");

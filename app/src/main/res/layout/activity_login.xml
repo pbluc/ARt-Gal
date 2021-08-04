@@ -4,17 +4,18 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
+    android:layout_margin="55dp"
     android:layout_gravity="center"
     tools:context=".LoginActivity">
 
-    <TextView
+    <ImageView
         android:id="@+id/tvLogin"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/login"
+        android:layout_width="2500dp"
+        android:layout_height="100dp"
+        android:src="@drawable/logo_transparent_background"
         android:textSize="30sp"
         android:layout_centerHorizontal="true"/>
+
 
     <EditText
         android:id="@+id/etEmail"
@@ -22,7 +23,8 @@
         android:layout_height="wrap_content"
         android:hint="@string/email"
         android:layout_below="@id/tvLogin"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="80dp"
+        android:textColorHighlight="@color/purple_500"
         android:inputType="textEmailAddress"/>
 
     <EditText
@@ -32,30 +34,49 @@
         android:hint="@string/password"
         android:inputType="textPassword"
         android:layout_marginTop="10dp"
+        android:textColorHighlight="@color/purple_500"
         android:layout_below="@id/etEmail"/>
 
     <Button
         android:id="@+id/btnLogin"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="65dp"
         android:layout_below="@id/etPassword"
         android:text="@string/login"
         android:layout_marginTop="10dp"/>
 
-    <Button
-        android:id="@+id/btnCreateAccount"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+    <LinearLayout
+        android:id="@+id/linearLayoutContainer"
         android:layout_below="@id/btnLogin"
-        android:text="@string/create_account"
-        android:layout_marginTop="10dp"/>
+        android:orientation="horizontal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:layout_centerHorizontal="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Don't have an account? "/>
+
+        <TextView
+            android:id="@+id/tvCreateAccount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textColor="@color/purple_700"
+            android:clickable="true"
+            android:text="Create account"/>
+
+    </LinearLayout>
 
     <ProgressBar
         android:id="@+id/pbLoading"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
+        android:layout_below="@id/linearLayoutContainer"
         android:layout_marginTop="100dp"
-        android:visibility="gone" />
+        android:visibility="invisible" />
 
 </RelativeLayout>

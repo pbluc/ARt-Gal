@@ -50,7 +50,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   private static final int NEW_MARKER_REQUEST_CODE = 20;
   private static final int GO_TO_MARKER_DETAILS_REQUEST_CODE = 30;
-  public final int QUERY_LIMIT = 6;
+  public final int QUERY_LIMIT = 8;
 
   private RecyclerView rvMarkers;
   private ImageView ivAddMarker;
@@ -98,10 +98,11 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     scrollListener = new EndlessRecyclerViewScrollListener(linearLayoutManager) {
       @Override
       public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
-        Log.i(TAG, "Loading data using scrollListener");
         loadNextDataFromDatabase();
       }
     };
+    // Set layout manager to position the items
+    rvMarkers.setLayoutManager(linearLayoutManager);
     rvMarkers.addOnScrollListener(scrollListener);
 
     // Initialize markers
@@ -110,8 +111,6 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     adapter = new MarkersAdapter(markers, UploadedMarkersActivity.this, this);
     // Attach the adapter to the recyclerview to populate items
     rvMarkers.setAdapter(adapter);
-    // Set layout manager to position the items
-    rvMarkers.setLayoutManager(linearLayoutManager);
 
     swipeContainer.setOnRefreshListener(() -> fetchUploadedMarkersAsync());
 
@@ -234,7 +233,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
             }
             markers.addAll(resultMarkers);
             adapter.notifyDataSetChanged();
-            Log.i(TAG, "markers after query: " + markers.toString());
+            Log.i(TAG, "scrollListener: markers after initial query: " + markers.toString());
           } else {
             Log.e(TAG, "Error getting marker documents", task.getException());
           }
@@ -244,26 +243,28 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
 
   private void loadNextDataFromDatabase() {
     // Send the request
-    Log.i(TAG, "markers before scrolling: " + markers);
     markersRef
         .orderBy(Marker.KEY_CREATED_AT, Query.Direction.DESCENDING)
-        .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 2).getCreatedAt())
+        .whereLessThan(Marker.KEY_CREATED_AT, markers.get(markers.size() - 1).getCreatedAt())
         .limit(QUERY_LIMIT)
         .get()
         .addOnCompleteListener(task -> {
+          int expectedLoadCount = task.getResult().size();
           if (task.isSuccessful()) {
             // Deserialize and construct new model objects from the query response
             List<Marker> resultMarkers = new ArrayList<>();
             for (QueryDocumentSnapshot document : task.getResult()) {
               Marker resultMarker = document.toObject(Marker.class);
               resultMarkers.add(resultMarker);
+
+              if (resultMarkers.size() == expectedLoadCount) {
+                int positionInserted = markers.size();
+                // Append the new data objects to the existing set of items inside the array of items
+                markers.addAll(resultMarkers);
+                // Notify the adapter of the new items made with 'notifyItemRangeInserted()'
+                adapter.notifyItemRangeInserted(positionInserted, resultMarkers.size());
+              }
             }
-            int positionInserted = markers.size();
-            // Append the new data objects to the existing set of items inside the array of items
-            markers.addAll(resultMarkers);
-            // Notify the adapter of the new items made with 'notifyItemRangeInserted()'
-            adapter.notifyItemRangeInserted(positionInserted, resultMarkers.size());
-            Log.i(TAG, "markers after scrolling: " + markers.toString());
           } else {
             Log.e(TAG, "Error getting marker documents", task.getException());
           }

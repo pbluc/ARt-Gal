@@ -4,24 +4,35 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="16dp"
+    android:layout_margin="55dp"
     android:layout_gravity="center"
     tools:context=".CreateAccountActivity">
 
-    <TextView
-        android:id="@+id/tvCreateAccount"
+    <ProgressBar
+        android:id="@+id/pbLoading"
+        android:visibility="invisible"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/create_account"
-        android:textSize="30sp"
-        android:layout_centerHorizontal="true"/>
+        android:layout_centerHorizontal="true" />
+
+    <!--
+    <ImageView
+        android:id="@+id/ivAppLogo"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="20dp"
+        android:src="@drawable/logo_without_name_transparent_background"/>
+        -->
 
     <EditText
         android:id="@+id/etEmail"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_below="@id/tvCreateAccount"
-        android:layout_marginTop="50dp"
+        android:layout_below="@id/pbLoading"
+        android:layout_marginTop="20dp"
         android:hint="@string/email"
         android:inputType="textEmailAddress" />
 
@@ -59,27 +70,37 @@
         android:layout_below="@id/etUsername"/>
 
     <Button
-        android:id="@+id/btnLogin"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/etPassword"
-        android:text="@string/login"
-        android:layout_marginTop="10dp"/>
-
-    <Button
         android:id="@+id/btnCreateAccount"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/btnLogin"
+        android:layout_height="65dp"
+        android:layout_below="@id/etPassword"
         android:text="@string/create_account"
         android:layout_marginTop="10dp"/>
 
-    <ProgressBar
-        android:id="@+id/pbLoading"
-        android:visibility="gone"
+    <LinearLayout
+        android:id="@+id/linearLayoutContainer"
+        android:layout_below="@id/btnCreateAccount"
+        android:orientation="horizontal"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_centerVertical="true" />
+        android:layout_marginTop="10dp"
+        android:layout_centerHorizontal="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/btnCreateAccount"
+            android:text="Already have an account? "/>
+
+        <TextView
+            android:id="@+id/tvLogin"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textColor="@color/purple_700"
+            android:clickable="true"
+            android:text="Login here"/>
+
+    </LinearLayout>
 
 </RelativeLayout>
