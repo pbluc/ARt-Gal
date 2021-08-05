@@ -17,6 +17,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
@@ -389,19 +390,13 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     }
   }
 
-  boolean toggle = true;
-
   @Override
-  public void onLikeClick(int position, View view) {
-    // TODO: Determine if clicked marker is liked or not
-
+  public void onLikeClick(int position) {
     //  Add or remove marker document from current users likedMarkers array
-    updateCurrentUsersLiked(position, toggle);
-    toggle = !toggle;
-    // TODO: 3. Toggle heart fill
+    updateCurrentUsersLiked(position);
   }
 
-  private void updateCurrentUsersLiked(int position, boolean like) {
+  private void updateCurrentUsersLiked(int position) {
 
     String likedMarkerUid = markers.get(position).getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49);
     String likedMarkerUserUid = markers.get(position).getUser().getId();
@@ -417,8 +412,13 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
         .addOnCompleteListener(task -> {
           if (task.isSuccessful()) {
             User currUser = task.getResult().toObject(User.class);
+            boolean likedAction;
 
-            if (like) {
+            // Determine if clicked marker has been liked by this user
+            if (currUser.getLikedMarkers().contains(likedMarkerDoc)) { // Has already been liked so we unlike
+              currUser.removeLikedMarker(likedMarkerDoc);
+              likedAction = false;
+            } else { // Other we add to the user's liked
               if (currUser.getLikedMarkers() != null) {
                 currUser.addLikedMarker(likedMarkerDoc);
               } else {
@@ -426,8 +426,8 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                 liked.add(likedMarkerDoc);
                 currUser.setLikedMarkers(liked);
               }
-            } else {
-              currUser.removeLikedMarker(likedMarkerDoc);
+
+              likedAction = true;
             }
 
             currentUserDoc
@@ -435,7 +435,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
                 .addOnCompleteListener(task1 -> {
                   if (task1.isSuccessful()) {
                     //  Update the marker count on marker document
-                    updatedLikeCountOnMarker(position, likedMarkerDoc, like);
+                    updatedLikeCountOnMarker(position, likedMarkerDoc, likedAction);
                   } else {
                     Log.i(TAG, "onFailure: Could not add marker DocumentReference to current user document", task.getException());
                   }
@@ -464,7 +464,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
           if (task.isSuccessful()) {
             Log.i(TAG, "onSuccess: Updated like count");
             adapter.notifyItemChanged(position);
-            // TODO: Update updatedAt fields of current user and liked marker document
+            updateUserDocumentUpdatedAtField();
           } else {
             Log.i(TAG, "onFailure: Could not update like count", task.getException());
           }

@@ -13,12 +13,24 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.fbu.pbluc.artgal.R;
 import com.fbu.pbluc.artgal.models.Marker;
+import com.fbu.pbluc.artgal.models.User;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.List;
 
 public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHolder> {
 
   private static final String TAG = "MarkersAdapter";
+
+  private FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+  private FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+  private FirebaseFirestore firebaseFirestore = FirebaseFirestore.getInstance();
 
   // Two view types which will be used to determine whether a row should be displaying
   // data or a Progressbar
@@ -126,6 +138,30 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
         tvLikeCount.setVisibility(View.VISIBLE);
         tvLikeCount.setText(Integer.toString(marker.getLikedCount()));
       }
+
+      DocumentReference markerDoc = firebaseFirestore
+          .collection(User.KEY_USERS)
+          .document(marker.getUser().getId())
+          .collection(Marker.KEY_UPLOADED_MARKERS)
+          .document(marker.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49));
+
+      firebaseFirestore
+          .collection(User.KEY_USERS)
+          .document(firebaseUser.getUid())
+          .get()
+          .addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+              User user = task.getResult().toObject(User.class);
+
+              if (user.getLikedMarkers().contains(markerDoc)) {
+                ivLikeMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_filled_heart));
+              } else {
+                ivLikeMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_unfilled_heart_outline));
+              }
+            } else {
+              Log.i(TAG, "onFailure: Could not get current user document", task.getException());
+            }
+          });
     }
 
     @Override
@@ -133,7 +169,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       int position = getAdapterPosition();
       switch (view.getId()) {
         case R.id.ivLikeMarker:
-          mOnClickListener.onLikeClick(position, view);
+          mOnClickListener.onLikeClick(position);
           break;
         default:
           mOnClickListener.onListItemClick(position);
@@ -168,7 +204,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
   public interface ListItemClickListener {
     void onListItemClick(int position);
     void onListItemLongClick(int position, View view);
-    void onLikeClick(int position, View view);
+    void onLikeClick(int position);
   }
 
 }
