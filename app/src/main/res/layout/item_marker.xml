@@ -58,6 +58,17 @@
             android:textSize="16sp" />
     </LinearLayout>
 
+    <!--
+    <TextView
+        android:id="@+id/tvUsersUsername"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignStart="@id/tvCreatedAt"
+        android:text="pbluc"
+        android:layout_below="@id/linearLayoutContainer"
+        android:layout_marginTop="5dp" />
+        -->
+
     <TextView
         android:id="@+id/tvLikeCount"
         android:layout_width="wrap_content"

@@ -49,7 +49,6 @@ public class UploadedMarkersFragment extends Fragment implements MarkersAdapter.
 
   private static final String TAG = "UploadedMarkersFragment";
 
-  private static final int NEW_MARKER_REQUEST_CODE = 20;
   private static final int GO_TO_MARKER_DETAILS_REQUEST_CODE = 30;
   public final int QUERY_LIMIT = 8;
 
@@ -242,7 +241,7 @@ public class UploadedMarkersFragment extends Fragment implements MarkersAdapter.
             }
             markers.addAll(resultMarkers);
             adapter.notifyDataSetChanged();
-            Log.i("MarkersAdapter", "markers after initial query: " + markers.toString());
+            Log.i(TAG, "markers after initial query: " + markers.toString());
           } else {
             Log.e(TAG, "Error getting marker documents", task.getException());
           }

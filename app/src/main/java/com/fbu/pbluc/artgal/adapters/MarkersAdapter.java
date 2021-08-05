@@ -109,6 +109,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     private TextView tvAugmentedObjectFileName;
     private TextView tvCreatedAt;
     private TextView tvLikeCount;
+    // private TextView tvUsersUsername;
     private ImageView ivLikeMarker;
 
     public DataViewHolder(@NonNull View itemView) {
@@ -119,6 +120,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
       tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
       tvLikeCount = itemView.findViewById(R.id.tvLikeCount);
+      // tvUsersUsername = itemView.findViewById(R.id.tvUsersUsername);
       ivLikeMarker = itemView.findViewById(R.id.ivLikeMarker);
 
       ivLikeMarker.setOnClickListener(this);
@@ -153,7 +155,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
             if (task.isSuccessful()) {
               User user = task.getResult().toObject(User.class);
 
-              if (user.getLikedMarkers().contains(markerDoc)) {
+              if (user.getLikedMarkers() != null && user.getLikedMarkers().contains(markerDoc)) {
                 ivLikeMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_filled_heart));
               } else {
                 ivLikeMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_unfilled_heart_outline));

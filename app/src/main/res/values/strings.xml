@@ -49,5 +49,6 @@
     <string name="change_radius">Change Radius</string>
     <string name="miles"> miles</string>
     <string name="ar_core_user_privacy_disclosure"><![CDATA[This application runs on <a href="https://play.google.com/store/apps/details?id=com.google.ar.core">Google Play Services for AR</a> (ARCore), which is provided by Google LLC and governed by the <a href="https://policies.google.com/privacy">Google Privacy Policy</a>.]]></string>
+    <string name="feed">Feed</string>
 
 </resources>

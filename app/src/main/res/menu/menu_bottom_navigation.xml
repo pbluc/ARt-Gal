@@ -7,9 +7,9 @@
         android:title="@string/upload_marker"
         app:showAsAction="always" />
     <item
-        android:id="@+id/action_markers"
+        android:id="@+id/action_feed"
         android:icon="@drawable/ic_checkbox_multiple_blank_outline"
-        android:title="@string/view_markers"
+        android:title="@string/feed"
         app:showAsAction="always" />
     <item
         android:id="@+id/action_ar"
@@ -22,4 +22,10 @@
         android:icon="@drawable/ic_google_map"
         android:title="@string/marker_map"
         app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_markers"
+        android:icon="@drawable/ic_account_outline"
+        android:title="@string/view_markers"
+        app:showAsAction="always"/>
 </menu>

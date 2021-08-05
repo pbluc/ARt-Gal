@@ -16,6 +16,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.fbu.pbluc.artgal.fragments.AddMarkerFragment;
+import com.fbu.pbluc.artgal.fragments.FeedFragment;
 import com.fbu.pbluc.artgal.fragments.UploadedMarkersFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.ar.core.ArCoreApk;
@@ -66,8 +67,8 @@ public class MainActivity extends AppCompatActivity {
         case R.id.action_upload:
           fragment = new AddMarkerFragment();
           break;
-        case R.id.action_markers:
-          fragment = new UploadedMarkersFragment();
+        case R.id.action_feed:
+          fragment = new FeedFragment();
           break;
         case R.id.action_ar:
           goToArViewActivity();
@@ -75,8 +76,11 @@ public class MainActivity extends AppCompatActivity {
         case R.id.action_map:
           goToMarkerMapActivity();
           break;
+        case R.id.action_markers:
+          fragment = new UploadedMarkersFragment();
+          break;
         default:
-          fragment = new AddMarkerFragment();
+          fragment = new UploadedMarkersFragment();
           break;
       }
 
