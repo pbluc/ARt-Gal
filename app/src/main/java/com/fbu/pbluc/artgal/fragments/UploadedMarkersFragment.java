@@ -384,7 +384,7 @@ public class UploadedMarkersFragment extends Fragment implements MarkersAdapter.
             boolean likedAction;
 
             // Determine if clicked marker has been liked by this user
-            if (currUser.getLikedMarkers().contains(likedMarkerDoc)) { // Has already been liked so we unlike
+            if (currUser.getLikedMarkers() != null && currUser.getLikedMarkers().contains(likedMarkerDoc)) { // Has already been liked so we unlike
               currUser.removeLikedMarker(likedMarkerDoc);
               likedAction = false;
             } else { // Other we add to the user's liked

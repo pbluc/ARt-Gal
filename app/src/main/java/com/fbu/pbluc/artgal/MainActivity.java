@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity {
       return true;
     });
     // Set default selection
-    bottomNavigationView.setSelectedItemId(R.id.action_markers);
+    bottomNavigationView.setSelectedItemId(R.id.action_feed);
   }
 
   void maybeEnableArButton() {

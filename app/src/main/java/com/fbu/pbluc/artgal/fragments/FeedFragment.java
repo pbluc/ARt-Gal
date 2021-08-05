@@ -13,19 +13,20 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ProgressBar;
 
 import com.fbu.pbluc.artgal.R;
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
+import com.fbu.pbluc.artgal.models.User;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.Query;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -45,7 +46,10 @@ public class FeedFragment extends Fragment implements MarkersAdapter.ListItemCli
   private List<Marker> markers;
   private MarkersAdapter adapter;
 
+  private FirebaseAuth firebaseAuth;
   private FirebaseFirestore firebaseFirestore;
+  private FirebaseUser currentUser;
+  private DocumentReference currentUserDoc;
 
   public FeedFragment() {
     // Required empty public constructor
@@ -62,7 +66,13 @@ public class FeedFragment extends Fragment implements MarkersAdapter.ListItemCli
   public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    firebaseAuth = FirebaseAuth.getInstance();
     firebaseFirestore = FirebaseFirestore.getInstance();
+    currentUser = firebaseAuth.getCurrentUser();
+
+    currentUserDoc = firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(currentUser.getUid());
 
     rvMarkers = view.findViewById(R.id.rvMarkers);
     swipeContainer = view.findViewById(R.id.swipeContainer);
@@ -184,6 +194,95 @@ public class FeedFragment extends Fragment implements MarkersAdapter.ListItemCli
 
   @Override
   public void onLikeClick(int position) {
-    // TODO: Make sure user is able to like markers that is not their own
+    updateCurrentUsersLiked(position);
+  }
+
+  private void updateCurrentUsersLiked(int position) {
+
+    String likedMarkerUid = markers.get(position).getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49);
+    String likedMarkerUserUid = markers.get(position).getUser().getId();
+
+    DocumentReference likedMarkerDoc = firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(likedMarkerUserUid)
+        .collection(Marker.KEY_UPLOADED_MARKERS)
+        .document(likedMarkerUid);
+
+    currentUserDoc
+        .get()
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            User currUser = task.getResult().toObject(User.class);
+            boolean likedAction;
+
+            // Determine if clicked marker has been liked by this user
+            if (currUser.getLikedMarkers() != null && currUser.getLikedMarkers().contains(likedMarkerDoc)) { // Has already been liked so we unlike
+              currUser.removeLikedMarker(likedMarkerDoc);
+              likedAction = false;
+            } else { // Other we add to the user's liked
+              if (currUser.getLikedMarkers() != null) {
+                currUser.addLikedMarker(likedMarkerDoc);
+              } else {
+                ArrayList<DocumentReference> liked = new ArrayList<>();
+                liked.add(likedMarkerDoc);
+                currUser.setLikedMarkers(liked);
+              }
+
+              likedAction = true;
+            }
+
+            currentUserDoc
+                .update(User.KEY_LIKED_MARKERS, currUser.getLikedMarkers())
+                .addOnCompleteListener(task1 -> {
+                  if (task1.isSuccessful()) {
+                    //  Update the marker count on marker document
+                    updatedLikeCountOnMarker(position, likedMarkerDoc, likedAction);
+                  } else {
+                    Log.i(TAG, "onFailure: Could not add marker DocumentReference to current user document", task.getException());
+                  }
+                });
+          } else {
+            Log.i(TAG, "onFailure: Could not get current user Firestore document", task.getException());
+          }
+        });
+  }
+
+  private void updatedLikeCountOnMarker(int position, DocumentReference likedMarkerDoc, boolean like) {
+    if (markers.get(position).getLikedCount() == null) {
+      markers.get(position).setLikedCount(0);
+    }
+
+    if (like) {
+      markers.get(position).likeMarker();
+    } else {
+      markers.get(position).unlikeMarker();
+    }
+
+    int updatedLikeCount = markers.get(position).getLikedCount();
+    likedMarkerDoc
+        .update(Marker.KEY_LIKE_COUNT, updatedLikeCount)
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            Log.i(TAG, "onSuccess: Updated like count");
+            adapter.notifyItemChanged(position);
+            updateUserDocumentUpdatedAtField();
+          } else {
+            Log.i(TAG, "onFailure: Could not update like count", task.getException());
+          }
+        });
+  }
+
+  private void updateUserDocumentUpdatedAtField() {
+    firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(currentUser.getUid())
+        .update(User.KEY_UPDATED_AT, FieldValue.serverTimestamp())
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            Log.i(TAG, "onSuccess: Updated the updatedAt field on user document after removing selected uploaded markers");
+          } else {
+            Log.i(TAG, "onFailure: Could not update user document after removing selected markers", task.getException());
+          }
+        });
   }
 }
