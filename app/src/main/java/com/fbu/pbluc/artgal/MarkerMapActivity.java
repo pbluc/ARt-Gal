@@ -16,6 +16,7 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.fbu.pbluc.artgal.adapters.CustomWindowAdapter;
+import com.fbu.pbluc.artgal.fragments.AddMarkerFragment;
 import com.fbu.pbluc.artgal.models.Marker;
 
 import com.fbu.pbluc.artgal.trees.LatLngKDTree;
@@ -173,14 +174,34 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
       MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
       MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
 
-      if (getCallingActivity() != null) {
-        if (getCallingActivity().getClassName().equals(getString(R.string.main_activity))) {
-          //map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
+      String callingActivity = getIntent().getStringExtra(getString(R.string.flag));
 
-          btnChangeMarkerViewRadius.setVisibility(View.VISIBLE);
-          tvMarkersWithinRadius.setVisibility(View.VISIBLE);
+      if (callingActivity != null && callingActivity.equals(AddMarkerFragment.TAG)) {
+        btnDoneSettingLoc.setVisibility(View.VISIBLE);
 
-          addAllMarkerDocs();
+        map.setOnMapClickListener(placedLatLng -> {
+          map.clear();
+          placedMarker = map.addMarker(new MarkerOptions()
+              .position(placedLatLng));
+
+          map.setOnMarkerDragListener(this);
+
+          placedMarker.setDraggable(true);
+        });
+
+        map.setOnMyLocationButtonClickListener(() -> {
+          if (placedMarker != null) {
+            placedMarker.setPosition(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
+          }
+          return false;
+        });
+      } else {
+        //map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
+
+        btnChangeMarkerViewRadius.setVisibility(View.VISIBLE);
+        tvMarkersWithinRadius.setVisibility(View.VISIBLE);
+
+        addAllMarkerDocs();
 
           /*
           // Attach marker click listener to map here
@@ -189,27 +210,6 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
             Marker clicked = (Marker) marker.getTag();
             return true;
           });*/
-
-        } else if (getCallingActivity().getClassName().equals(getString(R.string.add_marker_activity))) {
-          btnDoneSettingLoc.setVisibility(View.VISIBLE);
-
-          map.setOnMapClickListener(placedLatLng -> {
-            map.clear();
-            placedMarker = map.addMarker(new MarkerOptions()
-                .position(placedLatLng));
-
-            map.setOnMarkerDragListener(this);
-
-            placedMarker.setDraggable(true);
-          });
-
-          map.setOnMyLocationButtonClickListener(() -> {
-            if (placedMarker != null) {
-              placedMarker.setPosition(new LatLng(mCurrentLocation.getLatitude(), mCurrentLocation.getLongitude()));
-            }
-            return false;
-          });
-        }
       }
     } else {
       //Toast.makeText(this, "Error - Map was null!!", Toast.LENGTH_SHORT).show();

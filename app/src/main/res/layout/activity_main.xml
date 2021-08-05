@@ -8,48 +8,28 @@
     tools:context=".MainActivity">
 
     <ImageView
+        android:id="@+id/ivLogout"
         android:layout_alignParentEnd="true"
         android:layout_alignParentTop="true"
-        android:id="@+id/ivLogout"
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:layout_marginEnd="10dp"
         android:layout_marginTop="10dp"
         android:src="@drawable/ic_logout"/>
 
-    <LinearLayout
-        android:layout_centerInParent="true"
+    <FrameLayout
+        android:id="@+id/flContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="80dp"
-        android:orientation="vertical">
+        android:layout_below="@id/ivLogout"
+        android:layout_above="@id/bottomNavigation"/>
 
-        <ImageButton
-            android:id="@+id/btnUploadMarker"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:src="@drawable/ic_plus_circle_outline"/>
-
-        <ImageButton
-            android:id="@+id/btnViewMarkers"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:src="@drawable/ic_checkbox_multiple_blank_outline"/>
-
-        <ImageButton
-            android:id="@+id/btnArView"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:src="@drawable/ic_google_ar"
-            android:visibility="visible"/>
-
-        <ImageButton
-            android:id="@+id/btnMarkerMap"
-            android:layout_width="match_parent"
-            android:layout_height="50dp"
-            android:src="@drawable/ic_google_map"/>
-
-    </LinearLayout>
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/ArCoreUserPrivacyDisclosure"
+        app:menu="@menu/menu_bottom_navigation" />
 
     <TextView
         android:id="@+id/ArCoreUserPrivacyDisclosure"
@@ -61,15 +41,5 @@
         android:textSize="10sp"
         android:textStyle="italic"
         />
-
-    <!--
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_below="@id/ArCoreUserPrivacyDisclosure"
-        app:menu="@menu/menu_bottom_navigation" />
-        -->
 
 </RelativeLayout>

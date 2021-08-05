@@ -53,8 +53,6 @@ import java.io.IOException;
 public class MarkerDetailsActivity extends AppCompatActivity {
   private final static String TAG = "MarkerDetailsActivity";
 
-  private static final int EDIT_CURRENT_MARKER_REQUEST_CODE = 1;
-
   private FirebaseAuth firebaseAuth;
   private FirebaseStorage firebaseStorage;
   private FirebaseFirestore firebaseFirestore;
@@ -108,7 +106,6 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
     String userUid = getIntent().getStringExtra(getString(R.string.user_marker_uid));
     String markerUid = getIntent().getStringExtra(getString(R.string.clicked_marker_uid));
-
 
     markerRef = firebaseFirestore
         .collection(User.KEY_USERS)
@@ -164,7 +161,10 @@ public class MarkerDetailsActivity extends AppCompatActivity {
 
           sceneViewerIntent.setData(intentUri);
           sceneViewerIntent.setPackage("com.google.ar.core");
-          startActivity(sceneViewerIntent);
+          // Verify that the intent will resolve to an activity
+          if (sceneViewerIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(sceneViewerIntent);
+          }
         })
         .addOnFailureListener(e -> Log.e(TAG, "onFailure: Could not get uri of augmented obj file", e));
   }
@@ -228,30 +228,18 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   }
 
   private void editCurrentMarker(String userUid, String markerUid) {
-    Intent intent = new Intent(this, AddMarkerActivity.class);
+    Intent intent = new Intent(MarkerDetailsActivity.this, MainActivity.class);
     intent.putExtra(getString(R.string.user_uid_editing_marker), userUid);
     intent.putExtra(getString(R.string.marker_uid_editing_marker), markerUid);
-    startActivityForResult(intent, EDIT_CURRENT_MARKER_REQUEST_CODE);
-  }
-
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    if (resultCode == RESULT_OK && data != null) {
-      switch (requestCode) {
-        case EDIT_CURRENT_MARKER_REQUEST_CODE:
-          setUpMarkerDetailsLayout();
-
-          break;
-        default:
-          break;
-      }
-    }
+    overridePendingTransition(0, 0);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    finish();
+    startActivity(intent);
   }
 
   @Override
   public void onBackPressed() {
-    Intent i = new Intent(MarkerDetailsActivity.this, UploadedMarkersActivity.class);
+    Intent i = new Intent(MarkerDetailsActivity.this, MainActivity.class);
     i.putExtra(getString(R.string.edited_viewed_marker), true);
     setResult(RESULT_OK, i);
     startActivity(i);
@@ -295,7 +283,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   }
 
   private void goToUploadedMarkersActivity(String deletedMarkerId) {
-    Intent i = new Intent();
+    Intent i = new Intent(MarkerDetailsActivity.this, MainActivity.class);
     i.putExtra(getString(R.string.deleted_marker_uid), deletedMarkerId);
     setResult(RESULT_OK, i);
     finish();
@@ -312,7 +300,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   }
 
   private void goToLoginActivity() {
-    Intent i = new Intent(this, LoginActivity.class);
+    Intent i = new Intent(MarkerDetailsActivity.this, LoginActivity.class);
     startActivity(i);
     finish();
   }
@@ -358,7 +346,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     this.sendBroadcast(intent);
 
     progressBarLoading.setVisibility(View.GONE);
-    Toast.makeText(this, "Image saved to gallery!", Toast.LENGTH_SHORT).show();
+    Toast.makeText(MarkerDetailsActivity.this, "Image saved to gallery!", Toast.LENGTH_SHORT).show();
     Log.i(TAG, "Saved image to gallery");
   }
 }

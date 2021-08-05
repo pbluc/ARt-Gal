@@ -1,6 +1,8 @@
 package com.fbu.pbluc.artgal;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
 
 import android.content.Intent;
 import android.os.Build;
@@ -9,12 +11,13 @@ import android.os.Handler;
 import android.text.Html;
 import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
-import android.view.View;
-import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.fbu.pbluc.artgal.fragments.AddMarkerFragment;
+import com.fbu.pbluc.artgal.fragments.UploadedMarkersFragment;
+import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.ar.core.ArCoreApk;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
@@ -26,11 +29,10 @@ public class MainActivity extends AppCompatActivity {
 
   private FirebaseAuth firebaseAuth;
 
+  final FragmentManager fragmentManager = getSupportFragmentManager();
+  private BottomNavigationView bottomNavigationView;
+
   private ImageView ivLogout;
-  private ImageButton btnUploadMarker;
-  private ImageButton btnViewMarker;
-  private ImageButton btnArView;
-  private ImageButton btnMarkerMap;
   private TextView arCoreUserPrivacyDisclosure;
 
   @Override
@@ -40,11 +42,9 @@ public class MainActivity extends AppCompatActivity {
 
     firebaseAuth = FirebaseAuth.getInstance();
 
+    bottomNavigationView = findViewById(R.id.bottomNavigation);
+
     ivLogout = findViewById(R.id.ivLogout);
-    btnUploadMarker = findViewById(R.id.btnUploadMarker);
-    btnViewMarker = findViewById(R.id.btnViewMarkers);
-    btnArView = findViewById(R.id.btnArView);
-    btnMarkerMap = findViewById(R.id.btnMarkerMap);
     arCoreUserPrivacyDisclosure = findViewById(R.id.ArCoreUserPrivacyDisclosure);
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -60,20 +60,43 @@ public class MainActivity extends AppCompatActivity {
 
     ivLogout.setOnClickListener(v -> logoutUser());
 
-    btnUploadMarker.setOnClickListener(v -> goToUploadActivity());
+    bottomNavigationView.setOnNavigationItemSelectedListener(item -> {
+      Fragment fragment = null;
+      switch (item.getItemId()) {
+        case R.id.action_upload:
+          fragment = new AddMarkerFragment();
+          break;
+        case R.id.action_markers:
+          fragment = new UploadedMarkersFragment();
+          break;
+        case R.id.action_ar:
+          goToArViewActivity();
+          break;
+        case R.id.action_map:
+          goToMarkerMapActivity();
+          break;
+        default:
+          fragment = new AddMarkerFragment();
+          break;
+      }
 
-    btnViewMarker.setOnClickListener(v -> goToMarkersActivity());
+      Bundle extras = getIntent().getExtras();
+      if (extras != null && extras.containsKey(getString(R.string.user_uid_editing_marker)) && extras.containsKey(getString(R.string.marker_uid_editing_marker))) {
+        fragment = new AddMarkerFragment();
+        fragment.setArguments(extras);
+      }
 
-    btnArView.setOnClickListener(v -> goToArViewActivity());
-
-    btnMarkerMap.setOnClickListener(v -> {
-      goToMarkerMapActivity();
+      if (fragment != null) {
+        fragmentManager.beginTransaction().replace(R.id.flContainer, fragment).commit();
+      }
+      return true;
     });
-
+    // Set default selection
+    bottomNavigationView.setSelectedItemId(R.id.action_markers);
   }
 
   void maybeEnableArButton() {
-    ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(this);
+    ArCoreApk.Availability availability = ArCoreApk.getInstance().checkAvailability(MainActivity.this);
     if (availability.isTransient()) {
       // Continue to query availability at 5Hz while compatibility is checked in the background.
       new Handler().postDelayed(new Runnable() {
@@ -84,11 +107,9 @@ public class MainActivity extends AppCompatActivity {
       }, 200);
     }
     if (availability.isSupported()) {
-      btnArView.setVisibility(View.VISIBLE);
-      btnArView.setEnabled(true);
+      bottomNavigationView.getMenu().getItem(2).setVisible(true);
     } else { // The device is unsupported or unknown.
-      btnArView.setVisibility(View.GONE);
-      btnArView.setEnabled(false);
+      bottomNavigationView.getMenu().getItem(2).setVisible(false);
     }
   }
 
@@ -102,29 +123,19 @@ public class MainActivity extends AppCompatActivity {
     }
   }
 
-  private void goToMarkersActivity() {
-    Intent i = new Intent(this, UploadedMarkersActivity.class);
-    startActivity(i);
-  }
-
-  private void goToUploadActivity() {
-    Intent i = new Intent(this, AddMarkerActivity.class);
-    startActivity(i);
-  }
-
-  private void goToArViewActivity() {
-    Intent i = new Intent(this, ArViewActivity.class);
-    startActivity(i);
-  }
-
   private void goToLoginActivity() {
-    Intent i = new Intent(this, LoginActivity.class);
+    Intent i = new Intent(MainActivity.this, LoginActivity.class);
     startActivity(i);
     finish();
   }
 
+  private void goToArViewActivity() {
+    Intent i = new Intent(MainActivity.this, ArViewActivity.class);
+    startActivity(i);
+  }
+
   private void goToMarkerMapActivity() {
-    Intent i = new Intent(this, MarkerMapActivity.class);
+    Intent i = new Intent(MainActivity.this, MarkerMapActivity.class);
     startActivityFromChild(this, i, VIEW_ALL_MARKERS, null);
   }
 
