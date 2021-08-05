@@ -1,5 +1,8 @@
 package com.fbu.pbluc.artgal.models;
 
+import com.google.firebase.firestore.DocumentReference;
+
+import java.util.ArrayList;
 import java.util.Map;
 
 public class User {
@@ -12,9 +15,11 @@ public class User {
   public static final String KEY_PASSWORD = "password";
   public static final String KEY_CREATED_AT = "createdAt";
   public static final String KEY_UPDATED_AT = "updatedAt";
+  public static final String KEY_LIKED_MARKERS = "likedMarkers";
 
   private String email;
   private Map<String, Object> name;
+  private ArrayList<DocumentReference> likedMarkers;
   private String username;
   private String password;
   private Object createdAt;
@@ -37,6 +42,22 @@ public class User {
 
   public void setName(Map<String, Object> name) {
     this.name = name;
+  }
+
+  public ArrayList<DocumentReference> getLikedMarkers() {
+    return likedMarkers;
+  }
+
+  public void setLikedMarkers(ArrayList<DocumentReference> likedMarkers) {
+    this.likedMarkers = likedMarkers;
+  }
+
+  public void addLikedMarker(DocumentReference likedMarker) {
+    likedMarkers.add(likedMarker);
+  }
+
+  public void removeLikedMarker(DocumentReference likedMarker) {
+    likedMarkers.remove(likedMarker);
   }
 
   public String getUsername() {

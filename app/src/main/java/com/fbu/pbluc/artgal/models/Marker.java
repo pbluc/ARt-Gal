@@ -1,20 +1,12 @@
 package com.fbu.pbluc.artgal.models;
 
-import android.net.Uri;
-import android.util.Log;
-
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
-import com.google.android.gms.maps.model.LatLng;
 import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.FieldValue;
-import com.google.maps.android.clustering.ClusterItem;
 
 
 import java.text.DateFormat;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -42,6 +34,7 @@ public class Marker {
   public static final String KEY_LOCATION = "location";
   public static final String KEY_LATITUDE = "latitude";
   public static final String KEY_LONGITUDE = "longitude";
+  public static final String KEY_LIKE_COUNT = "likedCount";
 
   private String title;
   private String description;
@@ -51,6 +44,7 @@ public class Marker {
   private Map<String, Object> location;
   private Object createdAt;
   private Object updatedAt;
+  private Integer likedCount;
   private boolean isSelected = false;
 
   public Marker() {
@@ -128,10 +122,24 @@ public class Marker {
     isSelected = selected;
   }
 
+  public Integer getLikedCount() {
+    return likedCount;
+  }
+
+  public void setLikedCount(Integer likedCount) {
+    this.likedCount = likedCount;
+  }
+
+  public void likeMarker() {
+    likedCount++;
+  }
+
+  public void unlikeMarker() { likedCount--; }
+
   @NonNull
   @Override
   public String toString() {
-    return "{ " + title + "} ";
+    return "{ " + title + ", " + description + ", " + user.toString() + ", " + likedCount + ", " + isSelected + "} ";
   }
 
   public String formattedCreatedAt() {

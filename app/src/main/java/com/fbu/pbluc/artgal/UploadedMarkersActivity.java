@@ -1,6 +1,5 @@
 package com.fbu.pbluc.artgal;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,10 +21,6 @@ import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
 import com.fbu.pbluc.artgal.models.Marker;
 import com.fbu.pbluc.artgal.models.User;
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.CollectionReference;
@@ -40,7 +35,6 @@ import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -68,6 +62,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   private FirebaseFirestore firebaseFirestore;
   private FirebaseStorage firebaseStorage;
   private StorageReference storageReference;
+  private DocumentReference currentUserDoc;
   private CollectionReference markersRef;
 
   @Override
@@ -81,10 +76,12 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
     firebaseStorage = FirebaseStorage.getInstance();
     storageReference = firebaseStorage.getReference();
 
-    // Create a reference to the uploadedMarkers subcollection
-    markersRef = firebaseFirestore
+    currentUserDoc = firebaseFirestore
         .collection(User.KEY_USERS)
-        .document(currentUser.getUid())
+        .document(currentUser.getUid());
+
+    // Create a reference to the uploadedMarkers subcollection
+    markersRef = currentUserDoc
         .collection(Marker.KEY_UPLOADED_MARKERS);
 
     rvMarkers = findViewById(R.id.rvMarkers);
@@ -233,7 +230,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
             }
             markers.addAll(resultMarkers);
             adapter.notifyDataSetChanged();
-            Log.i(TAG, "scrollListener: markers after initial query: " + markers.toString());
+            Log.i("MarkersAdapter", "markers after initial query: " + markers.toString());
           } else {
             Log.e(TAG, "Error getting marker documents", task.getException());
           }
@@ -381,7 +378,7 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
   public void onListItemLongClick(int position, View view) {
     Marker longClickedMarker = markers.get(position);
     longClickedMarker.setSelected(!longClickedMarker.isSelected());
-    view.setBackgroundColor(longClickedMarker.isSelected() ? Color.GRAY : Color.WHITE);
+    view.setBackgroundColor(longClickedMarker.isSelected() ? Color.GRAY : Color.WHITE); // TODO: Change back to the original background color
 
     if (getSelectedItems().size() > 0) {
       // Show view of delete all button
@@ -390,6 +387,88 @@ public class UploadedMarkersActivity extends AppCompatActivity implements Marker
       // Hide view of delete all button
       btnDeleteSelectedMarkers.setVisibility(View.GONE);
     }
+  }
+
+  boolean toggle = true;
+
+  @Override
+  public void onLikeClick(int position, View view) {
+    // TODO: Determine if clicked marker is liked or not
+
+    //  Add or remove marker document from current users likedMarkers array
+    updateCurrentUsersLiked(position, toggle);
+    toggle = !toggle;
+    // TODO: 3. Toggle heart fill
+  }
+
+  private void updateCurrentUsersLiked(int position, boolean like) {
+
+    String likedMarkerUid = markers.get(position).getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49);
+    String likedMarkerUserUid = markers.get(position).getUser().getId();
+
+    DocumentReference likedMarkerDoc = firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(likedMarkerUserUid)
+        .collection(Marker.KEY_UPLOADED_MARKERS)
+        .document(likedMarkerUid);
+
+    currentUserDoc
+        .get()
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            User currUser = task.getResult().toObject(User.class);
+
+            if (like) {
+              if (currUser.getLikedMarkers() != null) {
+                currUser.addLikedMarker(likedMarkerDoc);
+              } else {
+                ArrayList<DocumentReference> liked = new ArrayList<>();
+                liked.add(likedMarkerDoc);
+                currUser.setLikedMarkers(liked);
+              }
+            } else {
+              currUser.removeLikedMarker(likedMarkerDoc);
+            }
+
+            currentUserDoc
+                .update(User.KEY_LIKED_MARKERS, currUser.getLikedMarkers())
+                .addOnCompleteListener(task1 -> {
+                  if (task1.isSuccessful()) {
+                    //  Update the marker count on marker document
+                    updatedLikeCountOnMarker(position, likedMarkerDoc, like);
+                  } else {
+                    Log.i(TAG, "onFailure: Could not add marker DocumentReference to current user document", task.getException());
+                  }
+                });
+          } else {
+            Log.i(TAG, "onFailure: Could not get current user Firestore document", task.getException());
+          }
+        });
+  }
+
+  private void updatedLikeCountOnMarker(int position, DocumentReference likedMarkerDoc, boolean like) {
+    if (markers.get(position).getLikedCount() == null) {
+      markers.get(position).setLikedCount(0);
+    }
+
+    if (like) {
+      markers.get(position).likeMarker();
+    } else {
+      markers.get(position).unlikeMarker();
+    }
+
+    int updatedLikeCount = markers.get(position).getLikedCount();
+    likedMarkerDoc
+        .update(Marker.KEY_LIKE_COUNT, updatedLikeCount)
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            Log.i(TAG, "onSuccess: Updated like count");
+            adapter.notifyItemChanged(position);
+            // TODO: Update updatedAt fields of current user and liked marker document
+          } else {
+            Log.i(TAG, "onFailure: Could not update like count", task.getException());
+          }
+        });
   }
 
   private List<Marker> getSelectedItems() {

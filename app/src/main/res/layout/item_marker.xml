@@ -58,4 +58,25 @@
             android:textSize="16sp" />
     </LinearLayout>
 
+    <TextView
+        android:id="@+id/tvLikeCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignTop="@id/ivLikeMarker"
+        android:layout_alignBottom="@id/ivLikeMarker"
+        android:gravity="center_vertical"
+        android:layout_alignEnd="@id/tvTitle"
+        android:text="12"/>
+
+    <ImageView
+        android:id="@+id/ivLikeMarker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/tvLikeCount"
+        android:layout_marginRight="5dp"
+        android:layout_alignTop="@id/linearLayoutContainer"
+        android:src="@drawable/ic_unfilled_heart_outline"
+        android:clickable="true"/>
+
+
 </RelativeLayout>

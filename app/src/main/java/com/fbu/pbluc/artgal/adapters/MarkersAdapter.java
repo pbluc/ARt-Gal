@@ -1,9 +1,11 @@
 package com.fbu.pbluc.artgal.adapters;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,11 +18,12 @@ import java.util.List;
 
 public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHolder> {
 
+  private static final String TAG = "MarkersAdapter";
+
   // Two view types which will be used to determine whether a row should be displaying
   // data or a Progressbar
   public static final int VIEW_TYPE_LOADING = 0;
   public static final int VIEW_TYPE_ITEM = 1;
-
   private List<Marker> mMarkers;
   private Context mContext;
 
@@ -93,6 +96,8 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     private TextView tvDescription;
     private TextView tvAugmentedObjectFileName;
     private TextView tvCreatedAt;
+    private TextView tvLikeCount;
+    private ImageView ivLikeMarker;
 
     public DataViewHolder(@NonNull View itemView) {
       super(itemView);
@@ -101,7 +106,10 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       tvDescription = itemView.findViewById(R.id.tvDescription);
       tvAugmentedObjectFileName = itemView.findViewById(R.id.tvAugmentedObjectFileName);
       tvCreatedAt = itemView.findViewById(R.id.tvCreatedAt);
+      tvLikeCount = itemView.findViewById(R.id.tvLikeCount);
+      ivLikeMarker = itemView.findViewById(R.id.ivLikeMarker);
 
+      ivLikeMarker.setOnClickListener(this);
       itemView.setOnClickListener(this);
       itemView.setOnLongClickListener(this);
     }
@@ -111,12 +119,22 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       tvDescription.setText(marker.getDescription());
       tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
       tvCreatedAt.setText("Created " + marker.calculateTimeAgo());
+
+      if (marker.getLikedCount() == null || marker.getLikedCount() == 0) {
+        tvLikeCount.setVisibility(View.INVISIBLE);
+      } else {
+        tvLikeCount.setVisibility(View.VISIBLE);
+        tvLikeCount.setText(Integer.toString(marker.getLikedCount()));
+      }
     }
 
     @Override
     public void onClick(View view) {
       int position = getAdapterPosition();
       switch (view.getId()) {
+        case R.id.ivLikeMarker:
+          mOnClickListener.onLikeClick(position, view);
+          break;
         default:
           mOnClickListener.onListItemClick(position);
           break;
@@ -150,6 +168,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
   public interface ListItemClickListener {
     void onListItemClick(int position);
     void onListItemLongClick(int position, View view);
+    void onLikeClick(int position, View view);
   }
 
 }
