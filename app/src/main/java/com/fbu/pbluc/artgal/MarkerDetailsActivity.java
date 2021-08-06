@@ -74,6 +74,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
   private ImageView ivOriginalReferenceImageMedia;
   private ImageView ivDownloadImgUrl;
   private ImageView ivPreview3dModel;
+  private ImageView ivViewLocationOnMap;
   private LinearLayout deleteMarkerLayoutContainer;
   private LinearLayout editMarkerLayoutContainer;
   private ProgressBar progressBarLoading;
@@ -101,6 +102,7 @@ public class MarkerDetailsActivity extends AppCompatActivity {
     ivOriginalReferenceImageMedia = findViewById(R.id.ivOriginalReferenceImageMedia);
     ivDownloadImgUrl = findViewById(R.id.ivDownloadImgUrl);
     ivPreview3dModel = findViewById(R.id.ivPreview3dModel);
+    ivViewLocationOnMap = findViewById(R.id.ivViewLocationOnMap);
     deleteMarkerLayoutContainer = findViewById(R.id.deleteMarkerLayoutContainer);
     editMarkerLayoutContainer = findViewById(R.id.editMarkerLayoutContainer);
     progressBarLoading = findViewById(R.id.pbLoading);
@@ -185,6 +187,21 @@ public class MarkerDetailsActivity extends AppCompatActivity {
           tvDescription.setText(marker.getDescription());
           tvAugmentedObjectFileName.setText(marker.getAugmentedObj().get(Marker.KEY_FILENAME).toString().substring(49));
           tvCreatedAt.setText(marker.formattedCreatedAt());
+
+          if (marker.getLocation() != null) {
+            ivViewLocationOnMap.setVisibility(View.VISIBLE);
+
+            ivViewLocationOnMap.setOnClickListener(new View.OnClickListener() {
+              @Override
+              public void onClick(View v) {
+                // TODO: Open MarkerMapActivity and show marker
+                Intent openMap = new Intent(MarkerDetailsActivity.this, MarkerMapActivity.class);
+                double[] detailedMarkerLatLng = { (double) marker.getLocation().get(Marker.KEY_LATITUDE), (double) marker.getLocation().get(Marker.KEY_LONGITUDE)};
+                openMap.putExtra(getString(R.string.marker_detail_lat_lng), detailedMarkerLatLng);
+                startActivity(openMap);
+              }
+            });
+          }
 
           markerUser
               .get()

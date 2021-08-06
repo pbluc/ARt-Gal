@@ -36,7 +36,7 @@
 
     <ProgressBar
         android:id="@+id/pbLoading"
-        android:visibility="visible"
+        android:visibility="gone"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignTop="@id/ivReferenceImageMedia"
@@ -188,6 +188,15 @@
 
     </LinearLayout>
 
-
+    <ImageView
+        android:id="@+id/ivViewLocationOnMap"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:layout_alignTop="@id/tvCreatedAt"
+        android:layout_alignEnd="@id/linearLayoutContainer"
+        android:src="@drawable/ic_google_maps"
+        android:clickable="true"
+        android:visibility="gone"
+        />
 
 </RelativeLayout>

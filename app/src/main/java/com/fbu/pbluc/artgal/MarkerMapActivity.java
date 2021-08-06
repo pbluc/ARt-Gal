@@ -171,12 +171,13 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     if (googleMap != null) {
       // Map is ready
 
-      MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
-      MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
-
       String callingActivity = getIntent().getStringExtra(getString(R.string.flag));
+      double[] detailMarkerLatLng = getIntent().getDoubleArrayExtra(getString(R.string.marker_detail_lat_lng));
 
       if (callingActivity != null && callingActivity.equals(AddMarkerFragment.TAG)) {
+        MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
+        MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
+
         btnDoneSettingLoc.setVisibility(View.VISIBLE);
 
         map.setOnMapClickListener(placedLatLng -> {
@@ -195,7 +196,14 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
           }
           return false;
         });
+      } else if(detailMarkerLatLng != null) {
+
+        map.addMarker(new MarkerOptions().position(new LatLng(detailMarkerLatLng[0], detailMarkerLatLng[1])));
+        displayLocation(new LatLng(detailMarkerLatLng[0], detailMarkerLatLng[1]));
       } else {
+        MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
+        MarkerMapActivityPermissionsDispatcher.startLocationUpdatesWithPermissionCheck(this);
+
         //map.setInfoWindowAdapter(new CustomWindowAdapter(getLayoutInflater()));
 
         btnChangeMarkerViewRadius.setVisibility(View.VISIBLE);
@@ -370,6 +378,12 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     } else {
       //Toast.makeText(this, "Current location was null, enable GPS on emulator!", Toast.LENGTH_SHORT).show();
     }
+  }
+
+  private void displayLocation(LatLng point) {
+    LatLng latLng = new LatLng(point.latitude, point.longitude);
+    CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, 17);
+    map.animateCamera(cameraUpdate);
   }
 
   public void onSaveInstanceState(Bundle savedInstanceState) {
