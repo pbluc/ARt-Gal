@@ -1,5 +1,6 @@
 package com.fbu.pbluc.artgal.fragments;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -15,6 +16,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import com.fbu.pbluc.artgal.MarkerDetailsActivity;
 import com.fbu.pbluc.artgal.R;
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
 import com.fbu.pbluc.artgal.listeners.EndlessRecyclerViewScrollListener;
@@ -184,7 +186,14 @@ public class FeedFragment extends Fragment implements MarkersAdapter.ListItemCli
 
   @Override
   public void onListItemClick(int position) {
-    // TODO: Go to MarkerDetails Activity
+    // Start intent to go to marker details activity
+    Marker clickedMarker = markers.get(position);
+
+    Intent intent = new Intent(getActivity(), MarkerDetailsActivity.class);
+    intent.putExtra(getString(R.string.user_marker_uid), clickedMarker.getUser().getId());
+    intent.putExtra(getString(R.string.clicked_marker_uid), clickedMarker.getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49));
+
+    startActivity(intent);
   }
 
   @Override
@@ -195,6 +204,56 @@ public class FeedFragment extends Fragment implements MarkersAdapter.ListItemCli
   @Override
   public void onLikeClick(int position) {
     updateCurrentUsersLiked(position);
+  }
+
+  @Override
+  public void onFavoriteClick(int position) {
+    updateCurrentUsersFavorited(position);
+  }
+
+  private void updateCurrentUsersFavorited(int position) {
+    String favoritedMarkerUid = markers.get(position).getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49);
+    String favoritedMarkerUserUid = markers.get(position).getUser().getId();
+
+    DocumentReference favoritedMarkerDoc = firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(favoritedMarkerUserUid)
+        .collection(Marker.KEY_UPLOADED_MARKERS)
+        .document(favoritedMarkerUid);
+
+    currentUserDoc
+        .get()
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            User currUser = task.getResult().toObject(User.class);
+
+            // Determine if clicked marker has been favorited by this user
+            if (currUser.getFavoritedMarkers() != null && currUser.getFavoritedMarkers().contains(favoritedMarkerDoc)) { // Has already been liked so we unlike
+              currUser.removeFavoritedMarker(favoritedMarkerDoc);
+            } else { // Other we add to the user's favorites
+              if (currUser.getFavoritedMarkers() != null) {
+                currUser.addFavoritedMarker(favoritedMarkerDoc);
+              } else {
+                ArrayList<DocumentReference> favorited = new ArrayList<>();
+                favorited.add(favoritedMarkerDoc);
+                currUser.setFavoritedMarkers(favorited);
+              }
+            }
+
+            currentUserDoc
+                .update(User.KEY_FAVORITED_MARKERS, currUser.getFavoritedMarkers())
+                .addOnCompleteListener(task1 -> {
+                  if (task1.isSuccessful()) {
+                    adapter.notifyItemChanged(position);
+                    updateUserDocumentUpdatedAtField();
+                  } else {
+                    Log.i(TAG, "onFailure: Could not add marker DocumentReference to current user document", task.getException());
+                  }
+                });
+          } else {
+            Log.i(TAG, "onFailure: Could not get current user Firestore document", task.getException());
+          }
+        });
   }
 
   private void updateCurrentUsersLiked(int position) {

@@ -8,15 +8,17 @@
 
     <TextView
         android:id="@+id/tvTitle"
-        android:layout_width="367dp"
+        android:layout_width="320dp"
         android:layout_height="wrap_content"
         android:text="Jelly Fish Under Night Sea"
         android:textSize="20sp" />
 
     <TextView
         android:id="@+id/tvDescription"
-        android:layout_width="367dp"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignEnd="@id/tvTitle"
+        android:layout_alignStart="@id/tvTitle"
         android:layout_below="@id/tvTitle"
         android:layout_marginTop="-1dp"
         android:text="Acrylic art painting"
@@ -76,7 +78,8 @@
         android:layout_alignTop="@id/ivLikeMarker"
         android:layout_alignBottom="@id/ivLikeMarker"
         android:gravity="center_vertical"
-        android:layout_alignEnd="@id/tvTitle"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="15dp"
         android:text="12"/>
 
     <ImageView
@@ -88,6 +91,15 @@
         android:layout_alignTop="@id/linearLayoutContainer"
         android:src="@drawable/ic_unfilled_heart_outline"
         android:clickable="true"/>
+
+    <ImageView
+        android:id="@+id/ivFavoriteMarker"
+        android:layout_width="27dp"
+        android:layout_height="27dp"
+        android:layout_alignTop="@id/tvTitle"
+        android:layout_alignStart="@id/ivLikeMarker"
+        android:clickable="true"
+        android:src="@drawable/ic_star_outline"/>
 
 
 </RelativeLayout>

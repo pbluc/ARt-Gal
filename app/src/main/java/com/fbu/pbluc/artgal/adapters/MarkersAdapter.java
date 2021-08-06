@@ -111,6 +111,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     private TextView tvLikeCount;
     // private TextView tvUsersUsername;
     private ImageView ivLikeMarker;
+    private ImageView ivFavoriteMarker;
 
     public DataViewHolder(@NonNull View itemView) {
       super(itemView);
@@ -122,8 +123,10 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       tvLikeCount = itemView.findViewById(R.id.tvLikeCount);
       // tvUsersUsername = itemView.findViewById(R.id.tvUsersUsername);
       ivLikeMarker = itemView.findViewById(R.id.ivLikeMarker);
+      ivFavoriteMarker = itemView.findViewById(R.id.ivFavoriteMarker);
 
       ivLikeMarker.setOnClickListener(this);
+      ivFavoriteMarker.setOnClickListener(this);
       itemView.setOnClickListener(this);
       itemView.setOnLongClickListener(this);
     }
@@ -160,6 +163,12 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
               } else {
                 ivLikeMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_unfilled_heart_outline));
               }
+
+              if (user.getFavoritedMarkers() != null && user.getFavoritedMarkers().contains(markerDoc)) {
+                ivFavoriteMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_filled_star));
+              } else {
+                ivFavoriteMarker.setImageDrawable(mContext.getDrawable(R.drawable.ic_star_outline));
+              }
             } else {
               Log.i(TAG, "onFailure: Could not get current user document", task.getException());
             }
@@ -172,6 +181,9 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
       switch (view.getId()) {
         case R.id.ivLikeMarker:
           mOnClickListener.onLikeClick(position);
+          break;
+        case R.id.ivFavoriteMarker:
+          mOnClickListener.onFavoriteClick(position);
           break;
         default:
           mOnClickListener.onListItemClick(position);
@@ -207,6 +219,7 @@ public class MarkersAdapter extends RecyclerView.Adapter<MarkersAdapter.ViewHold
     void onListItemClick(int position);
     void onListItemLongClick(int position, View view);
     void onLikeClick(int position);
+    void onFavoriteClick(int position);
   }
 
 }

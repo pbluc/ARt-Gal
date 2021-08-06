@@ -496,7 +496,8 @@ public class AddMarkerFragment extends Fragment {
                       progressBarLoading.setVisibility(ProgressBar.GONE);
                       Toast.makeText(getContext(), "Marker successfully uploaded!", Toast.LENGTH_LONG).show();
 
-                      Fragment frag = new UploadedMarkersFragment();
+                      // When new marker is uploaded, user is taken to main feed and can see their new post
+                      Fragment frag = new FeedFragment();
                       getActivity().getSupportFragmentManager().beginTransaction().replace(R.id.flContainer, frag).commit();
                     })
                     .addOnFailureListener(e -> Log.e(TAG, "Error updating marker document", e));

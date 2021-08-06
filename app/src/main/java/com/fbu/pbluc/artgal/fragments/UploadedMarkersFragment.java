@@ -365,6 +365,56 @@ public class UploadedMarkersFragment extends Fragment implements MarkersAdapter.
     updateCurrentUsersLiked(position);
   }
 
+  @Override
+  public void onFavoriteClick(int position) {
+    updateCurrentUsersFavorited(position);
+  }
+
+  private void updateCurrentUsersFavorited(int position) {
+    String favoritedMarkerUid = markers.get(position).getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49);
+    String favoritedMarkerUserUid = markers.get(position).getUser().getId();
+
+    DocumentReference favoritedMarkerDoc = firebaseFirestore
+        .collection(User.KEY_USERS)
+        .document(favoritedMarkerUserUid)
+        .collection(Marker.KEY_UPLOADED_MARKERS)
+        .document(favoritedMarkerUid);
+
+    currentUserDoc
+        .get()
+        .addOnCompleteListener(task -> {
+          if (task.isSuccessful()) {
+            User currUser = task.getResult().toObject(User.class);
+
+            // Determine if clicked marker has been favorited by this user
+            if (currUser.getFavoritedMarkers() != null && currUser.getFavoritedMarkers().contains(favoritedMarkerDoc)) { // Has already been liked so we unlike
+              currUser.removeFavoritedMarker(favoritedMarkerDoc);
+            } else { // Other we add to the user's favorites
+              if (currUser.getFavoritedMarkers() != null) {
+                currUser.addFavoritedMarker(favoritedMarkerDoc);
+              } else {
+                ArrayList<DocumentReference> favorited = new ArrayList<>();
+                favorited.add(favoritedMarkerDoc);
+                currUser.setFavoritedMarkers(favorited);
+              }
+            }
+
+            currentUserDoc
+                .update(User.KEY_FAVORITED_MARKERS, currUser.getFavoritedMarkers())
+                .addOnCompleteListener(task1 -> {
+                  if (task1.isSuccessful()) {
+                    adapter.notifyItemChanged(position);
+                    updateUserDocumentUpdatedAtField();
+                  } else {
+                    Log.i(TAG, "onFailure: Could not add marker DocumentReference to current user document", task.getException());
+                  }
+                });
+          } else {
+            Log.i(TAG, "onFailure: Could not get current user Firestore document", task.getException());
+          }
+        });
+  }
+
   private void updateCurrentUsersLiked(int position) {
 
     String likedMarkerUid = markers.get(position).getMarkerImg().get(Marker.KEY_FILENAME).toString().substring(29, 49);
