@@ -23,6 +23,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.ablanco.zoomy.Zoomy;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
@@ -112,6 +113,9 @@ public class MarkerDetailsActivity extends AppCompatActivity {
         .document(userUid)
         .collection(Marker.KEY_UPLOADED_MARKERS)
         .document(markerUid);
+
+    Zoomy.Builder builder = new Zoomy.Builder(this).target(ivReferenceImageMedia);
+    builder.register();
 
     setUpMarkerDetailsLayout();
 

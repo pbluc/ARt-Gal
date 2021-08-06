@@ -16,6 +16,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
+import com.fbu.pbluc.artgal.LoginActivity;
+import com.fbu.pbluc.artgal.MainActivity;
 import com.fbu.pbluc.artgal.MarkerDetailsActivity;
 import com.fbu.pbluc.artgal.R;
 import com.fbu.pbluc.artgal.adapters.MarkersAdapter;
