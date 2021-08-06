@@ -5,6 +5,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.os.Bundle;
 import android.os.Looper;
@@ -33,6 +35,7 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptor;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
@@ -67,8 +70,6 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
   private Button btnChangeMarkerViewRadius;
   private TextView tvMarkersWithinRadius;
   private EditText etMarkersWithinRadius;
-
-  private BitmapDescriptor customMarkerIcon;
 
   private SupportMapFragment mapFragment;
   private GoogleMap map;
@@ -106,8 +107,6 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     tvMarkersWithinRadius.setText(Double.toString(SHOW_MARKER_WITHIN_RADIUS) + getString(R.string.miles));
 
     firebaseFirestore = FirebaseFirestore.getInstance();
-
-    // customMarkerIcon = BitmapDescriptorFactory.fromResource(R.drawable.canvas_jellyfish);
 
     if (savedInstanceState != null && savedInstanceState.keySet().contains(KEY_LOC)) {
       // Since KEY_LOCATION was found in the Bundle, we can be sure that mCurrentLocation
@@ -182,8 +181,11 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
 
         map.setOnMapClickListener(placedLatLng -> {
           map.clear();
+
+
           placedMarker = map.addMarker(new MarkerOptions()
-              .position(placedLatLng));
+              .position(placedLatLng)
+              .icon(BitmapDescriptorFactory.fromBitmap(resizedImageBitmap())));
 
           map.setOnMarkerDragListener(this);
 
@@ -198,7 +200,9 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         });
       } else if(detailMarkerLatLng != null) {
 
-        map.addMarker(new MarkerOptions().position(new LatLng(detailMarkerLatLng[0], detailMarkerLatLng[1])));
+        map.addMarker(new MarkerOptions()
+            .position(new LatLng(detailMarkerLatLng[0], detailMarkerLatLng[1]))
+            .icon(BitmapDescriptorFactory.fromBitmap(resizedImageBitmap())));
         displayLocation(new LatLng(detailMarkerLatLng[0], detailMarkerLatLng[1]));
       } else {
         MarkerMapActivityPermissionsDispatcher.getMyLocationWithPermissionCheck(this);
@@ -269,7 +273,8 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
         com.google.android.gms.maps.model.Marker mapMarker = map.addMarker(new MarkerOptions()
             .position(withinRadiusMarker)
             .title(title)
-            .snippet(description));
+            .snippet(description)
+            .icon(BitmapDescriptorFactory.fromBitmap(resizedImageBitmap())));
         mapMarker.setTag(allMarkerDocuments.get(index));
         Log.i(TAG, "Successfully added marker to map");
       }
@@ -283,6 +288,17 @@ public class MarkerMapActivity extends AppCompatActivity implements GoogleMap.On
     // Add the circle onto the map
     Circle circle = map.addCircle(circleOptions);
     map.animateCamera(CameraUpdateFactory.newLatLngZoom(circleOptions.getCenter(), getZoomLevel(circle)));
+  }
+
+  private Bitmap resizedImageBitmap() {
+    int height = 100;
+    int width = 100;
+
+    BitmapDrawable bitmapdraw = (BitmapDrawable) getResources().getDrawable(R.drawable.custom_map_marker);
+    Bitmap b = bitmapdraw.getBitmap();
+    Bitmap resizedMarker = Bitmap.createScaledBitmap(b, width, height, false);
+
+    return resizedMarker;
   }
 
   private int getZoomLevel(Circle circle) {
