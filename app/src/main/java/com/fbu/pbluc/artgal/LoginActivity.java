@@ -15,7 +15,7 @@ import com.google.firebase.auth.FirebaseUser;
 
 public class LoginActivity extends AppCompatActivity {
 
-  private final static String TAG = "LoginActivity";
+  private final static String TAG = "LoginActivity"; // TODO: Make into a string xml value
 
   private FirebaseAuth firebaseAuth;
 
@@ -49,12 +49,10 @@ public class LoginActivity extends AppCompatActivity {
           .addOnCompleteListener(LoginActivity.this, task -> {
             if (task.isSuccessful()) {
               // Log in success, update UI with the signed-in user's information
-              // Log.i(TAG, "signInWithEmail:success");
               Toast.makeText(LoginActivity.this, "Successfully logged in!", Toast.LENGTH_SHORT).show();
               goToMainActivity();
             } else {
               // If sign in fails, display a message to the user.
-              // Log.i(TAG, "signInWthEmail:failure", task.getException());
               Toast.makeText(LoginActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
             progressBarLoading.setVisibility(ProgressBar.INVISIBLE);
@@ -87,5 +85,6 @@ public class LoginActivity extends AppCompatActivity {
   private void goToCreateAccountActivity() {
     Intent i = new Intent(this, CreateAccountActivity.class);
     startActivity(i);
+    finish();
   }
 }

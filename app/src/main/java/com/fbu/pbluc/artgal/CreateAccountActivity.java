@@ -22,16 +22,16 @@ import java.util.Map;
 
 public class CreateAccountActivity extends AppCompatActivity {
 
-  private final static String TAG = "CreateAccountActivity";
+  private final static String TAG = "CreateAccountActivity"; // TODO: Make into a string xml value
 
   private FirebaseAuth firebaseAuth;
   private FirebaseFirestore firebaseFirestore;
 
   private EditText etEmail;
-  private EditText etPassword;
   private EditText etFirstName;
   private EditText etLastName;
   private EditText etUsername;
+  private EditText etPassword;
   private TextView tvLogin;
   private Button btnCreateAccount;
   private ProgressBar progressBarLoading;
@@ -47,10 +47,10 @@ public class CreateAccountActivity extends AppCompatActivity {
     firebaseFirestore = FirebaseFirestore.getInstance();
 
     etEmail = findViewById(R.id.etEmail);
-    etPassword = findViewById(R.id.etPassword);
     etFirstName = findViewById(R.id.etFirstName);
     etLastName = findViewById(R.id.etLastName);
     etUsername = findViewById(R.id.etUsername);
+    etPassword = findViewById(R.id.etPassword);
     tvLogin = findViewById(R.id.tvLogin);
     btnCreateAccount = findViewById(R.id.btnCreateAccount);
     progressBarLoading = findViewById(R.id.pbLoading);
@@ -61,16 +61,15 @@ public class CreateAccountActivity extends AppCompatActivity {
       progressBarLoading.setVisibility(ProgressBar.VISIBLE);
 
       String email = etEmail.getText().toString().trim();
-      String password = etPassword.getText().toString().trim();
       String fName = etFirstName.getText().toString().trim();
       String lName = etLastName.getText().toString().trim();
       String username = etUsername.getText().toString().trim();
+      String password = etPassword.getText().toString().trim();
 
       firebaseAuth.createUserWithEmailAndPassword(email, password)
           .addOnCompleteListener(CreateAccountActivity.this, task -> {
             if (task.isSuccessful()) {
               // Sign up success, update UI with the signed in user's information
-              // Log.i(TAG, "createdUserWithEmail:success");
               Toast.makeText(CreateAccountActivity.this, "Successfully created account!", Toast.LENGTH_SHORT).show();
 
               FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
@@ -94,16 +93,15 @@ public class CreateAccountActivity extends AppCompatActivity {
               goToMainActivity();
             } else {
               // If sign up fails, display a message to the user
-              // Log.e(TAG, "createdUserWithEmail:failure", task.getException());
               Toast.makeText(CreateAccountActivity.this, "Authentication failed.", Toast.LENGTH_SHORT).show();
             }
             progressBarLoading.setVisibility(ProgressBar.INVISIBLE);
 
             etEmail.setText("");
-            etPassword.setText("");
             etFirstName.setText("");
             etLastName.setText("");
             etUsername.setText("");
+            etPassword.setText("");
           });
     });
 

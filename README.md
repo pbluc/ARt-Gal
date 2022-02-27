@@ -17,7 +17,7 @@ ARt Gal is an Android and multisharing AR app that allows users to detect and au
 - **Category:** Photo / Video, Multiplayer AR, Social
 - **Mobile:** Uses camera, mobile first experience
 - **Story:** Enhances the user's interaction by bringing the art around them to life through various AR effects that other users want them to see.
-- **Market:** Anyone that can appreciate art will find themselves envoloped.
+- **Market:** Anyone that can appreciate art will find themselves enveloped.
 - **Habit:** Users can explore the art outlets in their communities with more dimension. 
 - **Scope:** Will start off in concentrated regions, most likely in art spaces, educational institutions, and so forth. This has the potential to expand into a larger scope if more users utilize and share this technology. 
 
